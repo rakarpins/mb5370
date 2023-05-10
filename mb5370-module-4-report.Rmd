@@ -1752,6 +1752,60 @@ We are working with shapefiles in this case study because it is still the most l
 
 We can read shapefiles directly into R with the st_read command (which is like read_csv, but for spatial files):
 ```{r}
-aus <- st_read("data-for-course/spatial-data/Aussie/Aussie.shp")
+aus <- st_read("copepod-data/data-for-course/spatial-data/Aussie/Aussie.shp")
 ```
+```{r}
+shelf <- st_read("copepod-data/data-for-course/spatial-data/aus_shelf/aus_shelf.shp")
+```
+
+
+As always check out the data by typing the object names and reviewing the output in the console. Note here that the CRS is provided in the shapefile, it’s already spatially aware.
+```{r}
+aus
+```
+
+# 6.13.2 Mapping your polygons
+
+Again, tmap makes it very straightforward to make a map of polygons: 
+```{r}
+tm_shape(shelf) + 
+  tm_polygons()
+```
+
+Remember we can make a thematic map by layering it up just as we do for plots in ggplot2. Here we have indicated the shape of our map (shelf) and we have added a command bbox = sdat to expand the extent of the map so it depicts all of our copepod data points. We then add the shape of Australia (aus) on top of the shelf, and finally our copepod data (sdat) in the form of points using tm_dots().
+```{r}
+tm_shape(shelf, bbox = sdat) + 
+  tm_polygons() +
+  tm_shape(aus) + 
+  tm_polygons() + 
+  tm_shape(sdat) + 
+  tm_dots()
+```
+
+
+# 6.14 Exploring t_map
+Now is your turn to explore the tmap package and try customizing your map. Remember, errors may be frustrating but they are a great way to learn! Use ?tmap in R studio to see what the package has to offer.
+
+To learn about a quick way to change the style, type tmap_style("beaver") then run your map code again. This function is similar to ggplot themes, and will allow you to style your maps in a way you find effective for best communicating your findings. Even better, it allows you to add your own personal touch to your maps made in R. 
+
+Now open the tmap vignette. It can be accessed via coding or web search ‘r tmap’.
+```{r}
+vignette('tmap-getstarted')
+```
+Take 15-30 minutes to cement your learning of making maps in R. First of all, read through the vignette above and do the exercises. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
