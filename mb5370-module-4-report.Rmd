@@ -26,5 +26,1732 @@ You can also embed plots, for example:
 ```{r pressure, echo=FALSE}
 plot(pressure)
 ```
-
+ 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+
+# Workshop 3...
+
+# Workshop 4 - Data wrangling in R
+5.1	Workshop schedule
+This workshop aims to teach you how to take tabular data and prepare it for subsequent use, such as plotting, fitting statistical models, or summarising it to better understand patterns in your data. This data wrangling component of a data science workflow can often take up to 40-80% of the total time you spend on a project, so working to fully understand these functions can dramatically improve your skills, efficiency and comfort in developing scripted analyses!
+
+To support your learning of the actual programming (rather than data or interpretation), again we will follow the tutorials developed in the R4DS textbook. These are mostly reproduced below, though do refer to the textbook if anything is unclear or you need further information.
+
+Note that at the end of this workshop you will be set to begin your second assignment that aims to combine your learnings so far into an analysis of fisheries data obtained from the QFISH website.
+
+5.2	Workshop overview
+This three hour workshop will follow the data wrangling section of the R4DS textbook. It aims to give you an expert understanding of how to take a tabular dataset and prepare it in any way you need. Data wrangling is crucial in order to actually use your valuable data!
+
+5.2.1	Objectives
+Today we will focus on data wrangling using tidyr. We will:
+Learn about tibbles as a basis of tidyr, a new kind of data frame.
+
+Use readr to import data.
+
+Tidy R using tidyr
+
+Joining data with dplyr. ** Note: this section is optional and only for those who have rapidly progressed through the remaining sections of today’s workshop. 
+This starts at section 9 of the R4DS textbook. I highly recommend referring to the textbook if you have any questions or need any further information.
+
+5.3 What is a tibble?
+This workshop (and indeed when we’re using tidyr and probably for all of your future work) we will use “tibbles” instead of the traditional data frames you’re used to. 
+
+What are tibbles? Well, basically a dataframe!
+They are slightly adjusted dataframes which were designed to keep up with recent advances in R. Some things that were useful in R a decade ago, now hinder users rather than help them, so tibbles are a kind of future proof data frame. 
+
+Tibbles allow us to handle these issues of an aging programming language without breaking your existing code. So, best is just think of them as ‘future proof’ data frames.
+From here on, we will simply use ‘tibbles’ in place of dataframes for working in the ‘tidyverse’ a bit easier. 
+
+As we’ve already said, tibbles are not the same as R’s built-in data frame (which we will carefully distinguish by calling them a  data.frame) but just think of them like that - the best, most current way of representing tabular data to R. 
+Take your time to read a little more: vignette("tibble"). 
+Remember vignette’s come with every package and are a fountain of information, written in a way that is much easier to digest than the classic help documentation that comes with a package. 
+
+The tibble package is part of the core tidyverse package, which you should already have installed from the previous workshop. To use tibbles, we need to call in ‘tidyverse’ to our new script.
+
+
+```{r}
+library(tidyverse)
+```
+Tibbles are a unifying feature of the tidyverse so you will want to know how to create them when working in the tidyverse. 
+To convert regular data frames into tibbles you can use as_tibble():
+
+```{r}
+iris # look at iris
+str(iris) # check it out - what type is it? how many rows?
+
+as_tibble(iris)
+```
+
+Notice how there is a major difference in how tibbles are represented to you in the console? We’ll get into those differences, and the benefits, of tibbles in a minute.
+
+Now, note that you can also build a tibble from scratch - below we do that by passing the data directly to it (as opposed to importing it via csv). This is sometimes important if you want to type your dataset directly in R, rather than reading in data from excel, or if you want to build one from a collection of some variables you’ve produced. 
+
+An  excellent feature of a tibble is that they allow you to refer to variables that you just created, as shown below. See how we can call x when we define the z variable, even though we’ve only given a value for x within the tibble function? This functionality can be super efficient and helpful when building new column values. 
+```{r}
+tibble(
+  x = 1:5, 
+  y = 1, 
+  z = x ^ 2 + y) # call new variables to produce new column values!
+
+
+#> # A tibble: 5 × 3
+#>       x     y     z
+#>   <int> <dbl> <dbl>
+#> 1     1     1     2
+#> 2     2     1     5
+#> 3     3     1    10
+#> 4     4     1    17
+#> 5     5     1    26
+```
+
+Remember when we did this with data.frame in workshop 1? Definitely not as easy as this! We combined three character vectors together into separate variables and then combined them using the data.frame function into a data frame. Note here if you try to make a new variable by referring to it (e.g. z = x ^ 2 + y) R will just not let you do it using data.frame.
+
+How would you build this dataframe using the old data.frame function? The answer is it would take a few steps. See if you can do it. How can you make this work?
+
+
+data.frame(c(
+     x = 1:5, 
+     y = 1, 
+     z = x ^ 2 + y
+     ))
+Error in data.frame(c(x = 1:5, y = 1, z = x^2 + y)) : 
+  object 'x' not found
+
+
+The other nice thing is that tibbles can have ‘non-syntactic’ names otherwise not valid in R, like names containing spaces	, or other special characters. Handy when you want to use more ‘modern’ variable naming when writing scripts, such as long and informative variable names as our style guides recommend.
+
+I still don’t recommend spaces though, it’s easier to use an underscore or a full stop. But if you want to, do note that if there are non-syntactic variables in your tibble, you’ll need to refer to them with backticks to help R understand what’s going on. 
+
+These are generally called escape characters to separate code from labels. See below:
+```{r}
+tb <- tibble(
+  `:)` = "smile", 
+  ` ` = "space",
+  `2000` = "number"
+)
+tb
+#> # A tibble: 1 × 3
+#>   `:)`  ` `   `2000`
+#>   <chr> <chr> <chr> 
+#> 1 smile space number
+```
+
+You’ll need the backticks for these variables when using other packages as well (ggplot2, dplyr, tidyr etc.). So in some ways it add some issues, but it’s nice to know that it’s possible if you need to, or perhaps your raw data that you import has some spaces or other characters in them. Tibbles can handle that.
+Now, there are also tribbles. This is a little confusing, but this stands for transposed tibble. This function (tribble()) is basically for one purpose: to help you do data entry directly in your script. The column headings are defined by formulas (they start with ~), and each data entry is put in a column, separated by commas.
+
+This function therefore makes it possible to lay out small amounts of data in easy to read form. 
+Add a comment to the line starting with # to clearly identify your header. This is also pretty common when you’re writing tables in markdown for knitr, so aligning with this formatting can be helpful if you regularly write things in markdown. 
+
+Great for slowly weaning you off excel, as when combined with your new skills in version control, you can safely store and version control your data within your scripts!
+
+```{r}
+tribble(
+  ~x, ~y, ~z,
+  #--|--|----
+  "a", 2, 3.6,
+  "b", 1, 8.5
+)
+#> # A tibble: 2 × 3
+#>   x         y     z
+#>   <chr> <dbl> <dbl>
+#> 1 a         2   3.6
+#> 2 b         1   8.5
+```
+
+As we said before, tibbles are “special” data frames that make our life easier when working in the tidyverse. So here let’s look more deeply at the difference between a tibble and a data.frame.
+
+The first difference lies in printing. Tibbles only print the first 10 rows and all columns that can fit on the screen making it easy to work with really large data. 
+
+
+```{r}
+as_tibble(iris)
+```
+
+No doubt you previously used View() or the R studio buttons frequently to look at your data frame in R. But what happens if you run all of your script at once? Or you want to rerun your script many times (like a simulation), or perhaps use knitr to write a report. View() doesn’t handle that well, so it’s better to ‘look’ at your data in the console itself. Tibble makes this way easier.
+
+Tibbles also print the type of each column variable next to its name (i.e. if it's a character, string, numeric etc.). This makes it easier for you to understand your data format - a key skill of being an effective programmer and very helpful for debugging.
+
+Tibbles also help your console from getting overwhelmed by printing massive data frames. So way better than using View() or printing a whole dataframe, or even using a workaround method such as using a function on your data frame that prints only the first few rows: head(10).
+
+Let’s have a look - notice this tibble is telling us we have a  data-time column (dttm), a date column, an integer, a doublem and a character. All without having to call an extra function to look at it. 
+
+Note: we don’t cover date formats in this tutorial, but do read this if you want to know more: https://r4ds.had.co.nz/dates-and-times.html 
+
+```{r}
+tibble(
+  a = lubridate::now() + runif(1e3) * 86400,
+  b = lubridate::today() + runif(1e3) * 30,
+  c = 1:1e3,
+  d = runif(1e3),
+  e = sample(letters, 1e3, replace = TRUE)
+)
+#> # A tibble: 1,000 × 5
+#>   a                   b              c     d e    
+#>   <dttm>              <date>     <int> <dbl> <chr>
+#> 1 2022-11-18 23:15:18 2022-11-25     1 0.368 n    
+#> 2 2022-11-19 17:20:28 2022-11-30     2 0.612 l    
+#> 3 2022-11-19 11:44:07 2022-12-10     3 0.415 p    
+#> 4 2022-11-19 01:05:24 2022-12-09     4 0.212 m    
+#> 5 2022-11-18 21:29:41 2022-12-06     5 0.733 i    
+#> 6 2022-11-19 08:30:38 2022-12-02     6 0.460 n    
+#> # ... with 994 more rows
+```
+
+But, alas, sometimes you need more than the default display of the top few rows and with tibbles you have a few options to help with this. 
+
+You can use print() to designate the number of rows (n) and display width. (width = Inf #displays every column). Here we can see this by looking at the giant flights dataset from the nycflights package. Note how many rows there are, but also now you can see all of the columns.
+
+```{r}
+install.packages("nycflights13")
+```
+
+```{r}
+library(nycflights13)
+```
+
+```{r}
+nycflights13::flights %>% 
+  print(n = 10, width = Inf)
+```
+
+You’ve a range of other things you can do to interrogate your data. Here are a few options you can set globally. 
+: if more than n rows, print only m rows. 
+
+Use options(tibble.print_min = Inf) to always show all rows.
+
+Use options(tibble.width = Inf) to always print all columns, regardless of the width of the screen.
+
+Use R’s built-in viewer with View()
+
+You can see a complete list of options by looking at the package help with package?tibble.
+
+You set global options for your R session like this:
+
+```{r}
+options(tibble.width = Inf)
+```
+
+From this point on when you look at a tibble you’ll be able to see all of the columns in your tibble.
+
+Now let’s do some more useful things in our tibble - which we can simply call a data frame from now on. 
+
+First of all, let’s pull out a single variable from our dataframe. We can use a dollar sign ($) to extract a full column of data (by name), or the simple double bracket to pull out an exact row of data (by row position). You can also pull out an exact cell value using [[,]]
+Example:
+```{r}
+
+df <- tibble(
+  x = runif(5),
+  y = rnorm(5)
+)
+
+# Extract by name
+df$x
+#> [1] 0.73296674 0.23436542 0.66035540 0.03285612 0.46049161
+df[["x"]]
+#> [1] 0.73296674 0.23436542 0.66035540 0.03285612 0.46049161
+
+# Extract by row position
+df[[1]]
+#> [1] 0.73296674 0.23436542 0.66035540 0.03285612 0.46049161
+
+# Extract by exact position
+df[[2,2]]
+#[1] -1.751506
+```
+Why would you want to do this? Well to pull out a single value, maybe to plot on a graph, add a label to a plot, print yourself a key result from your dataset. No doubt at some point you will want to get that value!
+
+Later on we will start to use pipes (%>%), which is a new way to do things to variables in R. For now, just know that to use these base R functions we will need to use a  . as a placeholder when using pipes to use these functions. A little confusing but we’ll get there a bit later. 
+
+```{r}
+
+df %>% .$x
+#> [1] 0.73296674 0.23436542 0.66035540 0.03285612 0.46049161
+df %>% .[["x"]]
+#> [1] 0.73296674 0.23436542 0.66035540 0.03285612 0.46049161
+```
+Another benefit to tibbles is that they won’t do partial matching, which means if the variable you call out doesn’t match exactly what’s in the dataframe, tibbles will generate a warning.
+
+
+df <- tibble(
+    xxx = runif(5),
+    y = rnorm(5)
+)
+df$xx
+NULL
+Warning message:
+Unknown or uninitialised column: `xx`. 
+
+
+There are some downsides with tibbles though, just so you are aware of them. 
+
+One of them is that they don’t always work with older functions in R. If you run into this problem, use as.data.frame() to turn a tibble back to a standard R dataframe (data.frame). R4DS tells us why:
+
+The main reason that some older functions don’t work with tibble is the [ function. We don’t use this square bracket function much in this book because dplyr::filter() and dplyr::select() allow you to solve the same problems with clearer code (but you will learn a little about it in vector subsetting). With base R data frames, [ sometimes returns a data frame, and sometimes returns a vector. With tibbles, [ always returns another tibble.
+
+So basically tibbles are great but as a future proof data frame, they sometimes rely on those relicts of the past to slowly get fix.
+
+Now have a try of what you know. The following examples show you again how tibbles are preferable. Can you work out what’s going on? Write a comment to yourself.
+```{r}
+df <- data.frame(abc = 1, xyz = "a")
+df
+df$x #call by name
+df[, "xyz"] #call by exact position
+```
+
+Some of these are actually pretty scary and you could end up doing something you don’t mean to! 
+# 5.4 How can I import data?
+At some point you will want to move beyond the datasets R provides your and begin to import your own data for analysis. 
+
+In this section, we will explore how to read plain-text rectangular files into R. These include your standard .csv files (which you may already be familiar with from other classes or your experiences importing your own data into R). 
+
+Although we will focus only on the simplest forms of data files in this section, many of the data import principles we’ll discuss are also applicable to other data types.
+
+First we will learn how to use the readr package (part of the tidyverse) to load simple files into R. You should have already loaded tidyverse in the previous section.
+
+Most of the functions in this package are concerned with turning flat files into data frames. And just like excel, you do have an option to import data that has a range of different delimeters, such as those where columns are defined by width, by commas, by tabs, or any other delimiter. 
+- read_csv() reads comma delimited files, read_csv2() reads semicolon separated files (common in countries where , is used as the decimal place), read_tsv() reads tab delimited files, and read_delim() reads in files with any delimiter.
+- read_fwf() reads fixed width files. You can specify fields either by their widths with fwf_widths() or their position with fwf_positions(). read_table() reads a common variation of fixed width files where columns are separated by white space.
+
+These functions all have similar syntax: once you’ve mastered one, you can use the others with ease. For the rest of this chapter we’ll focus on read_csv().Not only are csv files one of the most common forms of data storage, but once you understand read_csv(), you can easily apply your knowledge to all the other functions in readr.
+
+The first and most important argument to read_csv() is the file path. Do not run the code below because you do not have an actual called “data/heights.csv” in your directory. This is just to show how a file path would be written.
+
+heights <- read_csv("data/heights.csv")
+> Rows: 1192 Columns: 6
+> ── Column specification ────────────────────────────────────────────────────────
+> Delimiter: ","
+> chr (2): sex, race
+> dbl (4): earn, height, ed, age
+> 
+> ℹ Use `spec()` to retrieve the full column specification for this data.
+> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+When you run read_csv() it prints out a column specification that gives the name and type of each column.
+
+Note, you can run this code. Here you are actually supplying the csv data ‘inline’ directly in your script. Like we said earlier, this is useful for experimenting with readr and for creating reproducible examples to share with others:
+```{r}
+read_csv("a,b,c
+1,2,3
+4,5,6")
+#> Rows: 2 Columns: 3
+#> ── Column specification ────────────────────────────────────────────────────────
+#> Delimiter: ","
+#> dbl (3): a, b, c
+#> 
+#> ℹ Use `spec()` to retrieve the full column specification for this data.
+#> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+#> # A tibble: 2 × 3
+#>       a     b     c
+#>   <dbl> <dbl> <dbl>
+#> 1     1     2     3
+#> 2     4     5     6
+```
+
+read_csv() uses the first line of data for column names but there are some cases where you might not want the very first line of your data to be read as a column. Why? Well some data formats, like netcdf, or even your own data format (like a row of data in excel) will actually be information about the file itself rather than the actual data you want o import.
+
+For example, if you have metadata at the top of your file, you might want to skip these lines using skip = n where n is the number of lines you want to skip over. 
+
+Alternatively, use comment = '#' to will drop all lines starting with a “#” or whatever character you designate.
+```{r}
+read_csv("The first line of metadata
+  The second line of metadata
+  x,y,z
+  1,2,3", skip = 2)
+#> Rows: 1 Columns: 3
+#> ── Column specification ────────────────────────────────────────────────────────
+#> Delimiter: ","
+#> dbl (3): x, y, z
+#> 
+#> ℹ Use `spec()` to retrieve the full column specification for this data.
+#> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+#> # A tibble: 1 × 3
+#>       x     y     z
+#>   <dbl> <dbl> <dbl>
+#> 1     1     2     3
+
+read_csv("# A comment I want to skip
+  x,y,z
+  1,2,3", comment = "#")
+#> Rows: 1 Columns: 3
+#> ── Column specification ────────────────────────────────────────────────────────
+#> Delimiter: ","
+#> dbl (3): x, y, z
+#> 
+#> ℹ Use `spec()` to retrieve the full column specification for this data.
+#> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+#> # A tibble: 1 × 3
+#>       x     y     z
+#>   <dbl> <dbl> <dbl>
+#> 1     1     2     3
+```
+
+
+Another reason to adjust the read_csv() default is if your data does not contain column names. In this case, use col_names = FALSE to tell read_csv() not to treat the first row as headings but to instead label them sequentially from X1 to Xn. 
+
+Again, this is rare if you have input your own data, but sometimes data you get from others, from publications or scraped from the internet will have this issue. You now know how to solve it.
+
+```{r}
+read_csv("1,2,3\n4,5,6", col_names = FALSE)
+#> Rows: 2 Columns: 3
+#> ── Column specification ────────────────────────────────────────────────────────
+#> Delimiter: ","
+#> dbl (3): X1, X2, X3
+#> 
+#> ℹ Use `spec()` to retrieve the full column specification for this data.
+#> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+#> # A tibble: 2 × 3
+#>      X1    X2    X3
+#>   <dbl> <dbl> <dbl>
+#> 1     1     2     3
+#> 2     4     5     6
+```
+
+Here ("\n" is simply a shortcut for adding a new line. This is a common ‘break’ in programming. 
+
+There really is a lot of flexibility here, compared to read.csv() you might have used in the past. 
+
+You can pass col_names a character vector to be used as the column names:
+
+```{r}
+read_csv("1,2,3\n4,5,6", col_names = c("x", "y", "z"))
+#> Rows: 2 Columns: 3
+#> ── Column specification ────────────────────────────────────────────────────────
+#> Delimiter: ","
+#> dbl (3): x, y, z
+#> 
+#> ℹ Use `spec()` to retrieve the full column specification for this data.
+#> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+#> # A tibble: 2 × 3
+#>       x     y     z
+#>   <dbl> <dbl> <dbl>
+#> 1     1     2     3
+#> 2     4     5     6
+```
+
+
+You can also set the no data values. This is important because if you assume an empty cell is a 0, you could make a grave error in your analysis. Better to tell R that this is ‘no data’ so you can easily remove it later on. Sometimes people even use weird numbers for no data values, like 9999. Here you can tell R that this is not a real number, rather code for ‘no data’.
+
+Another option that commonly needs tweaking is na: this specifies the value (or values) that are used to represent missing values in your file:
+
+```{r}
+read_csv("a,b,c\n1,2,.", na = ".")
+#> Rows: 1 Columns: 3
+#> ── Column specification ────────────────────────────────────────────────────────
+#> Delimiter: ","
+#> dbl (2): a, b
+#> lgl (1): c
+#> 
+#> ℹ Use `spec()` to retrieve the full column specification for this data.
+#> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+#> # A tibble: 1 × 3
+#>       a     b c    
+#>   <dbl> <dbl> <lgl>
+#> 1     1     2 NA
+```
+
+If you want to know more, read this section of R4DS to understand why we would use readr’s read_csv() in place of base R’s read.csv()
+
+# 5.5 Tidying data using Tidyr
+Tidy data is happy data! Or rather, tidy data is useful data. So, now we are going to learn how to organize our data into tidy data which can be used in the tidyverse. 
+
+Using tidy data in the tidyverse allows us to spend more time analyzing our data and less time manipulating it. 
+
+In this section, you will be introduced to tidy data and the accompanying tools in the tidyr package. tidyr is part of the core tidyverse, which you should now be quite familiar with. Before starting this section, make sure the tidyverse is loaded.
+
+```{r}
+library(tidyverse)
+```
+
+# 5.5.1 Tidy data
+There are many ways to display a given data set, but not every way is easy to use for analysis. Note that in the example below, only table1 is “tidy”. Once you look at the differences of these, we’ll go over what makes a tidy dataset and why you always should strive to get your data into this format. 
+```{r}
+table1
+#> # A tibble: 6 × 4
+#>   country      year  cases population
+#>   <chr>       <int>  <int>      <int>
+#> 1 Afghanistan  1999    745   19987071
+#> 2 Afghanistan  2000   2666   20595360
+#> 3 Brazil       1999  37737  172006362
+#> 4 Brazil       2000  80488  174504898
+#> 5 China        1999 212258 1272915272
+#> 6 China        2000 213766 1280428583
+table2
+#> # A tibble: 12 × 4
+#>   country      year type           count
+#>   <chr>       <int> <chr>          <int>
+#> 1 Afghanistan  1999 cases            745
+#> 2 Afghanistan  1999 population  19987071
+#> 3 Afghanistan  2000 cases           2666
+#> 4 Afghanistan  2000 population  20595360
+#> 5 Brazil       1999 cases          37737
+#> 6 Brazil       1999 population 172006362
+#> # ... with 6 more rows
+table3
+#> # A tibble: 6 × 3
+#>   country      year rate             
+#> * <chr>       <int> <chr>            
+#> 1 Afghanistan  1999 745/19987071     
+#> 2 Afghanistan  2000 2666/20595360    
+#> 3 Brazil       1999 37737/172006362  
+#> 4 Brazil       2000 80488/174504898  
+#> 5 China        1999 212258/1272915272
+#> 6 China        2000 213766/1280428583
+
+# Spread across two tibbles
+table4a  # cases
+#> # A tibble: 3 × 3
+#>   country     `1999` `2000`
+#> * <chr>        <int>  <int>
+#> 1 Afghanistan    745   2666
+#> 2 Brazil       37737  80488
+#> 3 China       212258 213766
+table4b  # population
+#> # A tibble: 3 × 3
+#>   country         `1999`     `2000`
+#> * <chr>            <int>      <int>
+#> 1 Afghanistan   19987071   20595360
+#> 2 Brazil       172006362  174504898
+#> 3 China       1272915272 1280428583
+```
+ How we make our dataset a tidy dataset is by following three interrelated rules. 
+Each variable must have its own column.
+Each observation must have its own row.
+Each value must have its own cell.
+Here is a figure from the textbook to help you visualize these rules:
+
+These three rules are interrelated because it’s impossible to only satisfy two of the three. That interrelationship leads to an even simpler set of practical instructions:
+- Put each dataset in a tibble.
+- Put each variable in a column.
+Now, why do we care about having tidy data? We said before, tidy data is happy useful data and here is why: 
+- Having a consistent data structure makes it easier to learn the tools that work with it, and 
+- Having your variables in columns allows R to use its ability to work with vectors of values. This makes transforming tidy data a smoother process.
+
+All packages in the tidyverse are designed to work with tidy data. Including ggplot2, which we learned about in Workshop 2. 
+
+Here are some examples of how you might work with tidy table1 from the previous example using some skills we’re just about to learn. Key here is to note that filtering data, summarising data and using functions like group or color in ggplot2 is possible with a dataframe  in this format, but impossible if it’s not in this format. 
+
+Understanding whether you data frame structure is optimal (or tidy) is a fundamental skill for a data scientist. I rarely underline and bold, but I cannot stress this enough - once you master your understanding of how to best structure a data frame, everything else in R will become easy (well, easier).
+```{r}
+# Compute rate per 10,000
+table1 %>% 
+  mutate(rate = cases / population * 10000)
+#> # A tibble: 6 × 5
+#>   country      year  cases population  rate
+#>   <chr>       <int>  <int>      <int> <dbl>
+#> 1 Afghanistan  1999    745   19987071 0.373
+#> 2 Afghanistan  2000   2666   20595360 1.29 
+#> 3 Brazil       1999  37737  172006362 2.19 
+#> 4 Brazil       2000  80488  174504898 5.61 
+#> 5 China        1999 212258 1272915272 1.67 
+#> 6 China        2000 213766 1280428583 1.67
+
+# Compute cases per year
+table1 %>% 
+  count(year, wt = cases)
+#> # A tibble: 2 × 2
+#>    year      n
+#>   <int>  <int>
+#> 1  1999 250740
+#> 2  2000 296920
+
+# Visualise changes over time
+library(ggplot2)
+ggplot(table1, aes(year, cases)) + 
+  geom_line(aes(group = country), colour = "grey50") + 
+  geom_point(aes(colour = country))
+```
+
+# 5.5.2 Spreading and gathering data tables
+Even though tidy data is super handy, most of the data you’ll encounter will likely be untidy. Most people aren’t familiar with the concept of tidy data, and the format in which data is collected is not always done with future analyses in mind. This means that with most data, some amount of tidying will be needed before you can commence analysis. 
+
+So let’s dive in. What should we do to dataset you’ve collected, and how should we transform it to get it into a structure where we can start to do things to it.
+The first step in tidying the data is to understand what each variable and observation actually means. Sometimes this is obvious and sometimes you’ll need to consult with the person(s) who collected the data. 
+
+And often the person who knows the most about the data is YOU! So while learning how to tidy data in R is critical, the way in which you enter your data into excel is also vital! So this understanding of data structures here can translate into better data entry, and I think can be another one of those pieces of knowledge that will change your life in the future!
+
+Once you understand the data you’re looking at, the second step is to resolve one of the two common problems with untidy data. These are:
+- One variable is spread across multiple columns
+- One observation is scattered across multiple rows
+
+Hopefully your dataset will only have one of these problems but sometimes you may encounter both. 
+
+To fix these we will explore the use of two functions in tidyr: 
+
+pivot_longer()
+
+pivot_wider()
+
+
+Using pivot_longer(), according to R4DS
+
+A common problem is a dataset where some of the column names are not names of variables, but values of a variable. 
+
+Take table4a: the column names 1999 and 2000 represent values of the year variable, the values in the 1999 and 2000 columns represent values of the cases variable, and each row represents two observations, not one.
+
+How many times have you entered your data like this? Well, it’s hard for ggplot2 or any other package in R to analyse or represent it, you’ll need to fix it into a format where it’s useful.
+```{r}
+table4a
+#> # A tibble: 3 × 3
+#>   country     `1999` `2000`
+#> * <chr>        <int>  <int>
+#> 1 Afghanistan    745   2666
+#> 2 Brazil       37737  80488
+#> 3 China       212258 213766
+```
+To tidy a dataset like this, we need to pivot the offending columns into a new pair of variables. To describe that operation we need three parameters:
+
+- The set of columns whose names are values, not variables. In this example, those are the columns 1999 and 2000.
+- The name of the variable to move the column names to. Here it is year.
+- The name of the variable to move the column values to. Here it is cases.
+
+Together those parameters generate the call to pivot_longer():
+```{r}
+table4a %>% 
+  pivot_longer(c(`1999`, `2000`), names_to = "year", values_to = "cases")
+#> # A tibble: 6 × 3
+#>   country     year   cases
+#>   <chr>       <chr>  <int>
+#> 1 Afghanistan 1999     745
+#> 2 Afghanistan 2000    2666
+#> 3 Brazil      1999   37737
+#> 4 Brazil      2000   80488
+#> 5 China       1999  212258
+#> 6 China       2000  213766
+```
+
+The columns to pivot are specified with dplyr::select() style notation. Here there are only two columns, so we list them individually. Note that “1999” and “2000” are non-syntactic names (because they don’t start with a letter) so we have to surround them in backticks. year and cases do not exist in table4a so we put their names in quotes. This results in the pivoted columns being dropped and we get new year and  cases columns.
+
+pivot_longer() makes datasets “longer” by increasing the number of rows and decreasing the number of columns.
+We can use pivot_longer() to tidy table4b in a similar fashion. The only difference is the variable stored in the cell values:
+
+```{r}
+table4b %>% 
+  pivot_longer(c(`1999`, `2000`), names_to = "year", values_to = "population")
+#> # A tibble: 6 × 3
+#>   country     year  population
+#>   <chr>       <chr>      <int>
+#> 1 Afghanistan 1999    19987071
+#> 2 Afghanistan 2000    20595360
+#> 3 Brazil      1999   172006362
+#> 4 Brazil      2000   174504898
+#> 5 China       1999  1272915272
+#> 6 China       2000  1280428583
+```
+To combine the tidied versions of table4a and table4b into a single tibble, we need to use dplyr::left_join(), which you’ll learn about in the next section, which is optional (relational data).
+
+```{r}
+tidy4a <- table4a %>% 
+  pivot_longer(c(`1999`, `2000`), names_to = "year", values_to = "cases")
+tidy4b <- table4b %>% 
+  pivot_longer(c(`1999`, `2000`), names_to = "year", values_to = "population")
+left_join(tidy4a, tidy4b)
+#> Joining, by = c("country", "year")
+#> # A tibble: 6 × 4
+#>   country     year   cases population
+#>   <chr>       <chr>  <int>      <int>
+#> 1 Afghanistan 1999     745   19987071
+#> 2 Afghanistan 2000    2666   20595360
+#> 3 Brazil      1999   37737  172006362
+#> 4 Brazil      2000   80488  174504898
+#> 5 China       1999  212258 1272915272
+#> 6 China       2000  213766 1280428583
+```
+Using pivot_wider():
+
+To handle an observation scattered across multiple rows. pivot_wider() is the opposite of pivot_longer(). In table2 we see an observation is a country in a year with the observation spread across two rows.
+
+```{r}
+table2
+#> # A tibble: 12 × 4
+#>   country      year type           count
+#>   <chr>       <int> <chr>          <int>
+#> 1 Afghanistan  1999 cases            745
+#> 2 Afghanistan  1999 population  19987071
+#> 3 Afghanistan  2000 cases           2666
+#> 4 Afghanistan  2000 population  20595360
+#> 5 Brazil       1999 cases          37737
+#> 6 Brazil       1999 population 172006362
+#> # ... with 6 more rows
+```
+
+
+To make this tidy we only need two parameters:
+- The column to take variables from: type
+- The column to take values from: count
+Now we can use pivot_wider() to make the table shorter and wider by creating new, separate columns for cases and population and populating them with their associated values.
+```{r}
+table2 %>%
+    pivot_wider(names_from = type, values_from = count)
+#> # A tibble: 6 × 4
+#>   country      year  cases population
+#>   <chr>       <int>  <int>      <int>
+#> 1 Afghanistan  1999    745   19987071
+#> 2 Afghanistan  2000   2666   20595360
+#> 3 Brazil       1999  37737  172006362
+#> 4 Brazil       2000  80488  174504898
+#> 5 China        1999 212258 1272915272
+#> 6 China        2000 213766 1280428583
+```
+Take your time to try some of the the exercises in the R4DS textbook to further improve your understanding of these tools.
+
+As you work more and more in R, you’ll note this action of pivoting wider or longer is a key step to get to the point where all of your data values meet the aim of having values of each variable in single columns.
+
+# 5.5.3 Separating and uniting data tables
+We have seen so far how to tidy table2 and table4, but now we will explore table3 which has a different issue that makes it untidy. 
+In table3, we see one column (rate) that contains two variables (cases and population). 
+To address this, we can use the separate() function which separates one column into multiple columns wherever you designate.
+
+Here’s table3:
+```{r}
+table3
+#> # A tibble: 6 × 3
+#>   country      year rate             
+#> * <chr>       <int> <chr>            
+#> 1 Afghanistan  1999 745/19987071     
+#> 2 Afghanistan  2000 2666/20595360    
+#> 3 Brazil       1999 37737/172006362  
+#> 4 Brazil       2000 80488/174504898  
+#> 5 China        1999 212258/1272915272
+#> 6 China        2000 213766/1280428583
+```
+As we said above, we need to split the rate column up into two variables. separate() will take the name of the column to split and the names of the columns we want it split into.
+
+```{r}
+table3 %>% 
+  separate(rate, into = c("cases", "population"))
+#> # A tibble: 6 × 4
+#>   country      year cases  population
+#>   <chr>       <int> <chr>  <chr>     
+#> 1 Afghanistan  1999 745    19987071  
+#> 2 Afghanistan  2000 2666   20595360  
+#> 3 Brazil       1999 37737  172006362 
+#> 4 Brazil       2000 80488  174504898 
+#> 5 China        1999 212258 1272915272
+#> 6 China        2000 213766 1280428583
+```
+R4DS: By default, separate() will split values wherever it sees a non-alphanumeric character (i.e. a character that isn’t a number or letter). For example, in the code above, separate() split the values of rate at the forward slash characters. If you wish to use a specific character to separate a column, you can pass the character to the sep argument of separate(). For example, we could rewrite the code above as:
+```{r}
+table3 %>% 
+  separate(rate, into = c("cases", "population"), sep = "/")
+```
+Notice the data types in table3 above. Both cases and population are listed as character types. This is a default of using separate(). However, since the values in those columns are actually numbers, we want to ask separate() to convert them to better types using convert = TRUE
+```{r}
+table3 %>% 
+  separate(rate, into = c("cases", "population"), convert = TRUE)
+#> # A tibble: 6 × 4
+#>   country      year  cases population
+#>   <chr>       <int>  <int>      <int>
+#> 1 Afghanistan  1999    745   19987071
+#> 2 Afghanistan  2000   2666   20595360
+#> 3 Brazil       1999  37737  172006362
+#> 4 Brazil       2000  80488  174504898
+#> 5 China        1999 212258 1272915272
+#> 6 China        2000 213766 1280428583
+```
+R4DS: You can also pass a vector of integers to sep. separate() will interpret the integers as positions to split at. Positive values start at 1 on the far-left of the strings; negative values start at -1 on the far-right of the strings. When using integers to separate strings, the length of sep should be one less than the number of names in into.
+
+You can use this arrangement to separate the last two digits of each year. This makes this data less tidy, but is useful in other cases, as you’ll see in a little bit.
+```{r}
+table3 %>% 
+  separate(year, into = c("century", "year"), sep = 2)
+#> # A tibble: 6 × 4
+#>   country     century year  rate             
+#>   <chr>       <chr>   <chr> <chr>            
+#> 1 Afghanistan 19      99    745/19987071     
+#> 2 Afghanistan 20      00    2666/20595360    
+#> 3 Brazil      19      99    37737/172006362  
+#> 4 Brazil      20      00    80488/174504898  
+#> 5 China       19      99    212258/1272915272
+#> 6 China       20      00    213766/1280428583
+```
+We can also perform the inverse of separate() by using unite() to combine multiple columns into a single column. In the example below for table5 we use unite() to rejoin century and year columns. unite() takes a data frame, the name of the new variable and a set of columns to combine using dplyr::select(). 
+```{r}
+table5 %>% 
+  unite(new, century, year, sep = "")
+#> # A tibble: 6 × 3
+#>   country     new   rate             
+#>   <chr>       <chr> <chr>            
+#> 1 Afghanistan 1999  745/19987071     
+#> 2 Afghanistan 2000  2666/20595360    
+#> 3 Brazil      1999  37737/172006362  
+#> 4 Brazil      2000  80488/174504898  
+#> 5 China       1999  212258/1272915272
+#> 6 China       2000  213766/1280428583
+```
+Here we need to add sep ="" because we don’t want any separator (the default is to add an underscore _)
+
+# 5.5.4 Handling missing values
+Missing values are very common in datasets. I bet you’ve come across many of them, but how you handle them is a key way to separate you, as a trained marine data scientist, from someone who simply hacks away until it seems ok.
+
+Missing values are sometimes populated with NA or sometimes they could be simply missing altogether from the data (i.e. a blank cell, the worst!).
+
+In the below example, the return for the 4th quarter of 2015 is missing as NA while the return for the 1st quarter of 2016 is missing because it is simply absent.
+
+```{r}
+stocks <- tibble(
+  year   = c(2015, 2015, 2015, 2015, 2016, 2016, 2016),
+  qtr    = c(   1,    2,    3,    4,    2,    3,    4),
+  return = c(1.88, 0.59, 0.35,   NA, 0.92, 0.17, 2.66)
+)
+```
+
+
+The way data is missing matters alot when tidying your data, so think of it like this: An NA (explicit absence) indicates the presence of absent data, and a blank cell just indicates the absence of data (implicit absence). One you know for sure is a no data value, the other you have no idea.
+The way that a dataset is represented can make implicit values explicit. For example, we can make the implicit missing value explicit by putting years in the columns:
+```{r}
+stocks %>% 
+  pivot_wider(names_from = year, values_from = return)
+#> # A tibble: 4 × 3
+#>     qtr `2015` `2016`
+#>   <dbl>  <dbl>  <dbl>
+#> 1     1   1.88  NA   
+#> 2     2   0.59   0.92
+#> 3     3   0.35   0.17
+#> 4     4  NA      2.66
+```
+
+Because these explicit missing values may not be important in other representations of the data, you can set values_drop_na = TRUE in pivot_longer() to turn explicit missing values implicit. 
+This makes those missing values that are probably not supposed to be missing now a valid row of data in your data frame.
+```{r}
+stocks %>% 
+  pivot_wider(names_from = year, values_from = return) %>% 
+  pivot_longer(
+    cols = c(`2015`, `2016`), 
+    names_to = "year", 
+    values_to = "return", 
+    values_drop_na = TRUE
+  )
+#> # A tibble: 6 × 3
+#>     qtr year  return
+#>   <dbl> <chr>  <dbl>
+#> 1     1 2015    1.88
+#> 2     2 2015    0.59
+#> 3     2 2016    0.92
+#> 4     3 2015    0.35
+#> 5     3 2016    0.17
+#> 6     4 2016    2.66
+```
+
+Another important tool for making missing values explicit - very clear to you that they represent actual missing data values -  in tidy data is complete(). This function takes a set of columns and finds all the unique combinations and then ensures the original dataset contains all of those values, including filling in explicit NA where needed.
+```{r}
+stocks
+stocks %>% 
+  complete(year, qtr)
+#> # A tibble: 8 × 3
+#>    year   qtr return
+#>   <dbl> <dbl>  <dbl>
+#> 1  2015     1   1.88
+#> 2  2015     2   0.59
+#> 3  2015     3   0.35
+#> 4  2015     4  NA   
+#> 5  2016     1  NA   
+#> 6  2016     2   0.92
+#> # ... with 2 more rows
+```
+The fill() function can be used to fill in missing values that were meant to be carried forward in the data entry process. It can take columns with missing values and carry the last observation forward (replace them with the most recent non-missing value).
+```{r}
+treatment <- tribble(
+  ~ person,           ~ treatment, ~response,
+  "Derrick Whitmore", 1,           7,
+  NA,                 2,           10,
+  NA,                 3,           9,
+  "Katherine Burke",  1,           4
+)
+treatment
+
+treatment %>% 
+  fill(person)
+#> # A tibble: 4 × 3
+#>   person           treatment response
+#>   <chr>                <dbl>    <dbl>
+#> 1 Derrick Whitmore         1        7
+#> 2 Derrick Whitmore         2       10
+#> 3 Derrick Whitmore         3        9
+#> 4 Katherine Burke          1        4
+```
+
+
+# 5.6 Learning relational data
+Note, this section is optional in today's workshop. Only do this if you have fully mastered your understanding of how to build tidy dataframes ready for analysis - the sections above. Indeed, if you walk away with only one life changing thing today, it should be that you now understand how the structure of your data frames is vital and that there are tools to help you get them into shape. You need to be able to tidy your data so that you can move into anything else in R, like statistics, plotting, processing, anything really.
+
+Now, if you have time and want another life changing skill in your personal toolbox, go ahead and continue. Here we will learn how to join two data frames together and start doing things to them. 
+Note, I still recommend working through this section tonight or tomorrow in class. In many ways I consider these skills more important than the mapping we will do tomorrow. 
+
+What is relational data? 
+
+Simply put, relational data is a collection of multiple data tables in a given dataset or in a project that are related in some ways. 
+These are called relational data because the relations between these tables matter, not just the individual tables, and will even be a key source of the insights you might be able to deliver. 
+
+Many datasets will contain multiple data tables and the combination of data in these tables will help you to answer your questions of interest.
+
+Relations are always defined between a pair of tables. All other relations are built up from this simple idea: the relations of three or more tables are always a property of the relations between each pair. 
+
+Sometimes both elements of a pair can be the same table! This is needed if, for example, you have a table of people, and each person has a reference to their parents.
+
+Here’s an example. You have a dataset of the number of people per country. Great, you can now plot the number of people per country. BUt what if you wanted to plot the number of people per continent? Here you could get another dataset that is the name of the countries according to which continent they are in. To start to summarise data by continent, you can join these datasets together, because you have one common variable (country). Once joined, you are set to now summarise by continent!
+
+To work with relational data you need verbs that work with pairs of tables. In the same way that ggplot2 is a package for implementing the grammar of graphics, dplyr is a package focused on the grammar of data manipulation. It’s a package specialised for doing data analysis. 
+dplyr provides the following verbs to make common data analysis operations easier. 
+
+The three families of verbs designed to work with relational data are:
+
+Mutating joins - add new variables to one dataframe from matching observations in another
+
+Filtering joins - filter observations from one data frame based on whether or not they match an observation in the other table
+
+Set operations - treat observations as if they are set elements
+
+Note: dplyr makes common operations easier, though sometimes at the expense of making it more difficult to do other things that aren’t often needed for data analysis. So there are some tradeoffs, and you can read the textbook for the specific details of them. In practice, I am sure you’ll find these all very useful.
+
+Let’s explore relational data using the nycflight13 package dataset. You should already be familiar with this dataset from the Tibbles section (5.3). Make sure tidyverse and nycflights13 are loaded into your R library for this session.
+
+```{r}
+library(tidyverse)
+library(nycflights13)
+```
+
+nycflights13 contains four tibbles that are related to the flights table that you used in data transformation:
+airlines lets you look up the full carrier name from its abbreviated code:
+```{r}
+airlines
+#> # A tibble: 16 × 2
+#>   carrier name                    
+#>   <chr>   <chr>                   
+#> 1 9E      Endeavor Air Inc.       
+#> 2 AA      American Airlines Inc.  
+#> 3 AS      Alaska Airlines Inc.    
+#> 4 B6      JetBlue Airways         
+#> 5 DL      Delta Air Lines Inc.    
+#> 6 EV      ExpressJet Airlines Inc.
+#> # ... with 10 more rows
+```
+airports gives information about each airport, identified by the faa airport code:
+```{r}
+airports
+#> # A tibble: 1,458 × 8
+#>   faa   name                             lat   lon   alt    tz dst   tzone      
+#>   <chr> <chr>                          <dbl> <dbl> <dbl> <dbl> <chr> <chr>      
+#> 1 04G   Lansdowne Airport               41.1 -80.6  1044    -5 A     America/Ne...
+#> 2 06A   Moton Field Municipal Airport   32.5 -85.7   264    -6 A     America/Ch...
+#> 3 06C   Schaumburg Regional             42.0 -88.1   801    -6 A     America/Ch...
+#> 4 06N   Randall Airport                 41.4 -75.4   523    -5 A     America/Ne...
+#> 5 09J   Jekyll Island Airport           31.1 -81.4    11    -5 A     America/Ne...
+#> 6 0A9   Elizabethton Municipal Airport  36.4 -82.2  1593    -5 A     America/Ne...
+#> # ... with 1,452 more rows
+```
+planes gives information about each plane, identified by its tailnum:
+```{r}
+planes
+#> # A tibble: 3,322 × 9
+#>   tailnum  year type                    manuf...¹ model engines seats speed engine
+#>   <chr>   <int> <chr>                   <chr>   <chr>   <int> <int> <int> <chr> 
+#> 1 N10156   2004 Fixed wing multi engine EMBRAER EMB-...       2    55    NA Turbo...
+#> 2 N102UW   1998 Fixed wing multi engine AIRBUS... A320...       2   182    NA Turbo...
+#> 3 N103US   1999 Fixed wing multi engine AIRBUS... A320...       2   182    NA Turbo...
+#> 4 N104UW   1999 Fixed wing multi engine AIRBUS... A320...       2   182    NA Turbo...
+#> 5 N10575   2002 Fixed wing multi engine EMBRAER EMB-...       2    55    NA Turbo...
+#> 6 N105UW   1999 Fixed wing multi engine AIRBUS... A320...       2   182    NA Turbo...
+#> # ... with 3,316 more rows, and abbreviated variable name ¹​manufacturer
+```
+weather gives the weather at each NYC airport for each hour:
+```{r}
+weather
+#> # A tibble: 26,115 × 15
+#>   origin  year month   day  hour  temp  dewp humid wind_dir wind_speed wind_gust
+#>   <chr>  <int> <int> <int> <int> <dbl> <dbl> <dbl>    <dbl>      <dbl>     <dbl>
+#> 1 EWR     2013     1     1     1  39.0  26.1  59.4      270      10.4         NA
+#> 2 EWR     2013     1     1     2  39.0  27.0  61.6      250       8.06        NA
+#> 3 EWR     2013     1     1     3  39.0  28.0  65.4      240      11.5         NA
+#> 4 EWR     2013     1     1     4  39.9  28.0  62.2      250      12.7         NA
+#> 5 EWR     2013     1     1     5  39.0  28.0  65.4      260      12.7         NA
+#> 6 EWR     2013     1     1     6  37.9  28.0  67.2      240      11.5         NA
+#> # ... with 26,109 more rows, and 4 more variables: precip <dbl>, pressure <dbl>,
+#> #   visib <dbl>, time_hour <dttm>
+```
+This diagram helps depict the relations between pairs of tables in nycflights13. You only really need to understand the chain of relations between the tables that you are interested in. For nycflights13:
+- flights connects to planes via a single variable, tailnum.
+- flights connects to airlines through the carrier variable.
+- flights connects to airports in two ways: via origin and dest variables.
+- flights connects to weather via origin (the location), and year, month, day and hour (the time).
+
+# 5.6.1 Joining datasets
+So how can we actually join together our datasets? By identifying the keys. 
+
+A key is a variable (or set of variables) that uniquely identifies an observation. In simple cases, a single variable is sufficient to identify an observation. For example, each plane is uniquely identified by its tailnum. In other cases, multiple variables may be needed. For example, to identify an observation in weather you need five variables: year, month, day, hour, origin.
+
+The two types of keys are primary and foreign. It is possible for a variable to be both a primary and a foreign key depending on which pair of tables you’re considering. For example, origin is part of the weather primary key, and is also a foreign key for the airports table.
+
+A primary key uniquely identifies an observation in its own table. For example, planes$tailnum is a primary key because it uniquely identifies each plane in the planes table.
+
+A foreign key uniquely identifies an observation in another table. For example, flights$tailnum is a foreign key because it appears in the flights table where it matches each flight to a unique plane.
+
+Once you’ve identified the primary keys in your tables, it’s good practice to verify that they do indeed uniquely identify each observation. One way to do that is to count() the primary keys and look for entries where n is greater than one:
+
+```{r}
+planes %>% 
+  count(tailnum) %>% 
+  filter(n > 1)
+#> # A tibble: 0 × 2
+#> # ... with 2 variables: tailnum <chr>, n <int>
+
+weather %>% 
+  count(year, month, day, hour, origin) %>% 
+  filter(n > 1)
+#> # A tibble: 3 × 6
+#>    year month   day  hour origin     n
+#>   <int> <int> <int> <int> <chr>  <int>
+#> 1  2013    11     3     1 EWR        2
+#> 2  2013    11     3     1 JFK        2
+#> 3  2013    11     3     1 LGA        2
+```
+
+Sometimes a table doesn’t have an explicit primary key: each row is an observation, but no combination of variables reliably identifies it. For example, what’s the primary key in the flights table? You might think it would be the date plus the flight or tail number, but neither of those are unique:
+```{r}
+flights %>% 
+  count(year, month, day, flight) %>% 
+  filter(n > 1)
+#> # A tibble: 29,768 × 5
+#>    year month   day flight     n
+#>   <int> <int> <int>  <int> <int>
+#> 1  2013     1     1      1     2
+#> 2  2013     1     1      3     2
+#> 3  2013     1     1      4     2
+#> 4  2013     1     1     11     3
+#> 5  2013     1     1     15     2
+#> 6  2013     1     1     21     2
+#> # ... with 29,762 more rows
+
+flights %>% 
+  count(year, month, day, tailnum) %>% 
+  filter(n > 1)
+#> # A tibble: 64,928 × 5
+#>    year month   day tailnum     n
+#>   <int> <int> <int> <chr>   <int>
+#> 1  2013     1     1 N0EGMQ      2
+#> 2  2013     1     1 N11189      2
+#> 3  2013     1     1 N11536      2
+#> 4  2013     1     1 N11544      3
+#> 5  2013     1     1 N11551      2
+#> 6  2013     1     1 N12540      2
+#> # ... with 64,922 more rows
+```
+
+If a table lacks a primary key, it’s sometimes useful to add one with mutate() and row_number(). That makes it easier to match observations if you’ve done some filtering and want to check back in with the original data. This is called a surrogate key.
+
+A primary key and the corresponding foreign key in another table form a relation. Relations are typically one-to-many. For example, each flight has one plane, but each plane has many flights. In other data, you’ll occasionally see a 1-to-1 relationship. You can think of this as a special case of 1-to-many. You can model many-to-many relations with a many-to-1 relation plus a 1-to-many relation. For example, in this data there’s a many-to-many relationship between airlines and airports: each airline flies to many airports; each airport hosts many airlines.
+
+# 5.6.2 Mutating joins
+Mutating joins are a great tool we can use for combining a pair of tables.
+
+A mutating join allows you to combine variables from two tables. It first matches observations by their keys, then copies across variables from one table to the other.
+
+Join functions (like the base mutate()) add variables to the right side of your data table so sometimes you’ll need to change the view of your screen to see them all. (Remember your tibble skills! Set your global options!) 
+
+Or you can view them on a new tab entirely with View() in R studio. First we are going to create a narrower subset of the data from nycflights13 just so that it’s easier to see the variables being added one one screen:
+```{r}
+flights2 <- flights %>% 
+  select(year:day, hour, origin, dest, tailnum, carrier)
+#> # A tibble: 336,776 × 8
+#>    year month   day  hour origin dest  tailnum carrier
+#>   <int> <int> <int> <dbl> <chr>  <chr> <chr>   <chr>  
+#> 1  2013     1     1     5 EWR    IAH   N14228  UA     
+#> 2  2013     1     1     5 LGA    IAH   N24211  UA     
+#> 3  2013     1     1     5 JFK    MIA   N619AA  AA     
+#> 4  2013     1     1     5 JFK    BQN   N804JB  B6     
+#> 5  2013     1     1     6 LGA    ATL   N668DN  DL     
+#> 6  2013     1     1     5 EWR    ORD   N39463  UA     
+#> # ... with 336,770 more rows
+```
+Now we will see what happens when we use the mutating function left_join()
+```{r}
+flights2 %>%
+  select(-origin, -dest) %>% 
+  left_join(airlines, by = "carrier")
+#> # A tibble: 336,776 × 7
+#>    year month   day  hour tailnum carrier name                  
+#>   <int> <int> <int> <dbl> <chr>   <chr>   <chr>                 
+#> 1  2013     1     1     5 N14228  UA      United Air Lines Inc. 
+#> 2  2013     1     1     5 N24211  UA      United Air Lines Inc. 
+#> 3  2013     1     1     5 N619AA  AA      American Airlines Inc.
+#> 4  2013     1     1     5 N804JB  B6      JetBlue Airways       
+#> 5  2013     1     1     6 N668DN  DL      Delta Air Lines Inc.  
+#> 6  2013     1     1     5 N39463  UA      United Air Lines Inc. 
+#> # ... with 336,770 more rows
+```
+Here, we have asked it to add the full arline name to the flights2 data by combining the airlines and flights2 data frames with left_join(). Notice the column name has been added on the right and contains the carrier’s full name.
+
+Now, we could have gotten to this same result using the R base mutate() function (see code below), but notice that the code is much more involved and can get messy when matching multiple variables. This is why we use a “mutating join” to make life a little easier.
+```{r}
+flights2 %>%
+  select(-origin, -dest) %>% 
+  mutate(name = airlines$name[match(carrier, airlines$carrier)])
+#> # A tibble: 336,776 × 7
+#>    year month   day  hour tailnum carrier name                  
+#>   <int> <int> <int> <dbl> <chr>   <chr>   <chr>                 
+#> 1  2013     1     1     5 N14228  UA      United Air Lines Inc. 
+#> 2  2013     1     1     5 N24211  UA      United Air Lines Inc. 
+#> 3  2013     1     1     5 N619AA  AA      American Airlines Inc.
+#> 4  2013     1     1     5 N804JB  B6      JetBlue Airways       
+#> 5  2013     1     1     6 N668DN  DL      Delta Air Lines Inc.  
+#> 6  2013     1     1     5 N39463  UA      United Air Lines Inc. 
+#> # ... with 336,770 more rows
+```
+Let’s dive into how mutating joins work in detail. Visual representations are a handy tool for conceptualising these joins. 
+```{r}
+x <- tribble(
+  ~key, ~val_x,
+     1, "x1",
+     2, "x2",
+     3, "x3"
+)
+y <- tribble(
+  ~key, ~val_y,
+     1, "y1",
+     2, "y2",
+     4, "y3"
+)
+
+```
+
+The coloured column represents the “key” variable: these are used to match the rows between the tables. The grey column represents the “value” column that is carried along for the ride. In these examples I’ll show a single key variable, but the idea generalises in a straightforward way to multiple keys and multiple values.
+
+A join is a way of connecting each row in x to zero, one, or more rows in y. The following diagram shows each potential match as an intersection of a pair of lines.
+
+Here we have flipped the order of key and value in our x table to show that joins match based on the key, and the value is simply along for the ride.
+
+In an actual join, matches will be indicated with dots. The number of dots = the number of matches = the number of rows in the output.
+
+There are two categories of joins: inner and outer. The inner join is the simplest join as it matches observations with equivalent keys. The visualisation above is an inner join and more specifically an equijoin because the keys are matched using the equality operator “=”. (Note: most joins are equijoins so this specification isn’t strictly necessary. 
+The most important property of an inner join is that unmatched rows are not included in the result. This means that generally inner joins are usually not appropriate for use in analysis because it’s too easy to lose observations.
+
+The output of an inner join is a new data frame that contains the key, the x values, and the y values. We use by to tell dplyr which variable is the key:
+
+```{r}
+x %>% 
+  inner_join(y, by = "key")
+#> # A tibble: 2 × 3
+#>     key val_x val_y
+#>   <dbl> <chr> <chr>
+#> 1     1 x1    y1   
+#> 2     2 x2    y2
+```
+
+The other category of join is the outer join which keeps observations that appear in at least one of the tables. There are three types of outer joins:
+- left_join() keeps all observations in x (we’ve seen this in our first example)
+- right_join() keeps all observations in y
+- full_join() keeps all observations in x and y
+
+These joins work by adding an additional “virtual” observation to each table. This observation has a key that always matches (if no other key matches), and a value filled with NA. The left join should be your default join, because it preserves the original observations even when there isn’t a match.
+
+Here is another way to visualise the 4 joins, however, this depiction misses what happens when keys don’t uniquely identify an observation. We will talk about this more below.
+
+
+So far all the diagrams have assumed that the keys are unique. But that’s not always the case. This section explains what happens when the keys are not unique. There are two possibilities:
+1. One table has duplicate keys. This is useful when you want to add in additional information as there is typically a one-to-many relationship.
+```{r}
+x <- tribble(
+  ~key, ~val_x,
+     1, "x1",
+     2, "x2",
+     2, "x3",
+     1, "x4"
+)
+y <- tribble(
+  ~key, ~val_y,
+     1, "y1",
+     2, "y2"
+)
+left_join(x, y, by = "key")
+#> # A tibble: 4 × 3
+#>     key val_x val_y
+#>   <dbl> <chr> <chr>
+#> 1     1 x1    y1   
+#> 2     2 x2    y2   
+#> 3     2 x3    y2   
+#> 4     1 x4    y1
+```
+
+2. Both tables have duplicate keys. This is usually an error because in neither table do the keys uniquely identify an observation. When you join duplicated keys, you get all possible combinations, the Cartesian product:
+```{r}
+x <- tribble(
+  ~key, ~val_x,
+     1, "x1",
+     2, "x2",
+     2, "x3",
+     3, "x4"
+)
+y <- tribble(
+  ~key, ~val_y,
+     1, "y1",
+     2, "y2",
+     2, "y3",
+     3, "y4"
+)
+left_join(x, y, by = "key")
+#> # A tibble: 6 × 3
+#>     key val_x val_y
+#>   <dbl> <chr> <chr>
+#> 1     1 x1    y1   
+#> 2     2 x2    y2   
+#> 3     2 x2    y3   
+#> 4     2 x3    y2   
+#> 5     2 x3    y3   
+#> 6     3 x4    y4
+```
+
+So far, the pairs of tables have always been joined by a single variable, and that variable has the same name in both tables. That constraint was encoded by by = "key". You can use other values for by to connect the tables in other ways:
+- The default, by = NULL, uses all variables that appear in both tables, the natural join. For example, the flights and weather tables match on their common variables: year, month, day, hour and origin.
+
+```{r}
+flights2 %>% 
+  left_join(weather)
+#> Joining, by = c("year", "month", "day", "hour", "origin")
+#> # A tibble: 336,776 × 18
+#>    year month   day  hour origin dest  tailnum carrier  temp  dewp humid wind_...¹
+#>   <int> <int> <int> <dbl> <chr>  <chr> <chr>   <chr>   <dbl> <dbl> <dbl>   <dbl>
+#> 1  2013     1     1     5 EWR    IAH   N14228  UA       39.0  28.0  64.4     260
+#> 2  2013     1     1     5 LGA    IAH   N24211  UA       39.9  25.0  54.8     250
+#> 3  2013     1     1     5 JFK    MIA   N619AA  AA       39.0  27.0  61.6     260
+#> 4  2013     1     1     5 JFK    BQN   N804JB  B6       39.0  27.0  61.6     260
+#> 5  2013     1     1     6 LGA    ATL   N668DN  DL       39.9  25.0  54.8     260
+#> 6  2013     1     1     5 EWR    ORD   N39463  UA       39.0  28.0  64.4     260
+#> # ... with 336,770 more rows, 6 more variables: wind_speed <dbl>,
+#> #   wind_gust <dbl>, precip <dbl>, pressure <dbl>, visib <dbl>,
+#> #   time_hour <dttm>, and abbreviated variable name ¹​wind_dir
+```
+- A character vector, by = "x". This is like a natural join, but uses only some of the common variables. For example, flights and planes have year variables, but they mean different things so we only want to join by tailnum. Note: that the year variables (which appear in both input data frames, but are not constrained to be equal) are disambiguated in the output with a suffix.
+
+```{r}
+
+flights2 %>% 
+  left_join(planes, by = "tailnum")
+#> # A tibble: 336,776 × 16
+#>   year.x month   day  hour origin dest  tailnum carrier year.y type      manuf...¹
+#>    <int> <int> <int> <dbl> <chr>  <chr> <chr>   <chr>    <int> <chr>     <chr>  
+#> 1   2013     1     1     5 EWR    IAH   N14228  UA        1999 Fixed wi... BOEING 
+#> 2   2013     1     1     5 LGA    IAH   N24211  UA        1998 Fixed wi... BOEING 
+#> 3   2013     1     1     5 JFK    MIA   N619AA  AA        1990 Fixed wi... BOEING 
+#> 4   2013     1     1     5 JFK    BQN   N804JB  B6        2012 Fixed wi... AIRBUS 
+#> 5   2013     1     1     6 LGA    ATL   N668DN  DL        1991 Fixed wi... BOEING 
+#> 6   2013     1     1     5 EWR    ORD   N39463  UA        2012 Fixed wi... BOEING 
+#> # ... with 336,770 more rows, 5 more variables: model <chr>, engines <int>,
+#> #   seats <int>, speed <int>, engine <chr>, and abbreviated variable name
+#> #   ¹​manufacturer
+```
+- A named character vector: by = c("a" = "b"). This will match variable a in table x to variable b in table y. The variables from x will be used in the output. 
+
+For example, if we want to draw a map (this will be relevant for our last workshop!) we need to combine the flights data with the airports data which contains the location (lat and lon) of each airport. 
+
+Each flight has an origin and destination airport, so we need to specify which one we want to join to:
+```{r}
+flights2 %>% 
+  left_join(airports, c("dest" = "faa"))
+#> # A tibble: 336,776 × 15
+#>    year month   day  hour origin dest  tailnum carrier name      lat   lon   alt
+#>   <int> <int> <int> <dbl> <chr>  <chr> <chr>   <chr>   <chr>   <dbl> <dbl> <dbl>
+#> 1  2013     1     1     5 EWR    IAH   N14228  UA      George...  30.0 -95.3    97
+#> 2  2013     1     1     5 LGA    IAH   N24211  UA      George...  30.0 -95.3    97
+#> 3  2013     1     1     5 JFK    MIA   N619AA  AA      Miami ...  25.8 -80.3     8
+#> 4  2013     1     1     5 JFK    BQN   N804JB  B6      <NA>     NA    NA      NA
+#> 5  2013     1     1     6 LGA    ATL   N668DN  DL      Hartsf...  33.6 -84.4  1026
+#> 6  2013     1     1     5 EWR    ORD   N39463  UA      Chicag...  42.0 -87.9   668
+#> # ... with 336,770 more rows, and 3 more variables: tz <dbl>, dst <chr>,
+#> #   tzone <chr>
+
+flights2 %>% 
+  left_join(airports, c("origin" = "faa"))
+#> # A tibble: 336,776 × 15
+#>    year month   day  hour origin dest  tailnum carrier name      lat   lon   alt
+#>   <int> <int> <int> <dbl> <chr>  <chr> <chr>   <chr>   <chr>   <dbl> <dbl> <dbl>
+#> 1  2013     1     1     5 EWR    IAH   N14228  UA      Newark...  40.7 -74.2    18
+#> 2  2013     1     1     5 LGA    IAH   N24211  UA      La Gua...  40.8 -73.9    22
+#> 3  2013     1     1     5 JFK    MIA   N619AA  AA      John F...  40.6 -73.8    13
+#> 4  2013     1     1     5 JFK    BQN   N804JB  B6      John F...  40.6 -73.8    13
+#> 5  2013     1     1     6 LGA    ATL   N668DN  DL      La Gua...  40.8 -73.9    22
+#> 6  2013     1     1     5 EWR    ORD   N39463  UA      Newark...  40.7 -74.2    18
+#> # ... with 336,770 more rows, and 3 more variables: tz <dbl>, dst <chr>,
+#> #   tzone <chr>
+```
+
+See the “Exercise” and “Other Implementations” sections of the textbook for more information
+
+# 5.6.3 Filtering Joins
+Generally I would say you’re not going to use types of joins very often, or if you do you are at a point where you really know what you are doing in R. 
+
+Filtering joins also match observations but they affect the observations themselves rather than the variables like we saw from mutating joins. The two types of filtering joins are semi_join(x,y) and anti_join(x,y).
+semi_join(x,y) keeps all observations in x that have a match in y 
+
+anti_join(x,y) drops all the observations in x that have a match in y.
+
+Semi-joins are useful for matching filtered summary tables back to the original rows. For example, imagine you’ve found the top ten most popular destinations from nycflights13:
+```{r}
+top_dest <- flights %>%
+  count(dest, sort = TRUE) %>%
+  head(10)
+top_dest
+#> # A tibble: 10 × 2
+#>   dest      n
+#>   <chr> <int>
+#> 1 ORD   17283
+#> 2 ATL   17215
+#> 3 LAX   16174
+#> 4 BOS   15508
+#> 5 MCO   14082
+#> 6 CLT   14064
+#> # ... with 4 more rows
+```
+Now, if you wanted to find each flight that went to one of those destinations you could construct a filter like so:
+```{r}
+flights %>% 
+  filter(dest %in% top_dest$dest)
+#> # A tibble: 141,145 × 19
+#>    year month   day dep_time sched_dep...¹ dep_d...² arr_t...³ sched...⁴ arr_d...⁵ carrier
+#>   <int> <int> <int>    <int>       <int>   <dbl>   <int>   <int>   <dbl> <chr>  
+#> 1  2013     1     1      542         540       2     923     850      33 AA     
+#> 2  2013     1     1      554         600      -6     812     837     -25 DL     
+#> 3  2013     1     1      554         558      -4     740     728      12 UA     
+#> 4  2013     1     1      555         600      -5     913     854      19 B6     
+#> 5  2013     1     1      557         600      -3     838     846      -8 B6     
+#> 6  2013     1     1      558         600      -2     753     745       8 AA     
+#> # ... with 141,139 more rows, 9 more variables: flight <int>, tailnum <chr>,
+#> #   origin <chr>, dest <chr>, air_time <dbl>, distance <dbl>, hour <dbl>,
+#> #   minute <dbl>, time_hour <dttm>, and abbreviated variable names
+#> #   ¹​sched_dep_time, ²​dep_delay, ³​arr_time, ⁴​sched_arr_time, ⁵​arr_delay
+```
+
+But this can be a tricky method when you need to extend this to multiple variables!
+
+For example, imagine that you’d found the 10 days with highest average delays. How would you construct the filter statement that used year, month, and day to match it back to flights?
+
+Instead you can use a semi-join, which connects the two tables like a mutating join, but instead of adding new columns, only keeps the rows in x that have a match in y:
+```{r}
+flights %>% 
+  semi_join(top_dest)
+#> Joining, by = "dest"
+#> # A tibble: 141,145 × 19
+#>    year month   day dep_time sched_dep...¹ dep_d...² arr_t...³ sched...⁴ arr_d...⁵ carrier
+#>   <int> <int> <int>    <int>       <int>   <dbl>   <int>   <int>   <dbl> <chr>  
+#> 1  2013     1     1      542         540       2     923     850      33 AA     
+#> 2  2013     1     1      554         600      -6     812     837     -25 DL     
+#> 3  2013     1     1      554         558      -4     740     728      12 UA     
+#> 4  2013     1     1      555         600      -5     913     854      19 B6     
+#> 5  2013     1     1      557         600      -3     838     846      -8 B6     
+#> 6  2013     1     1      558         600      -2     753     745       8 AA     
+#> # ... with 141,139 more rows, 9 more variables: flight <int>, tailnum <chr>,
+#> #   origin <chr>, dest <chr>, air_time <dbl>, distance <dbl>, hour <dbl>,
+#> #   minute <dbl>, time_hour <dttm>, and abbreviated variable names
+#> #   ¹​sched_dep_time, ²​dep_delay, ³​arr_time, ⁴​sched_arr_time, ⁵​arr_delay
+```
+Only the existence of a match is important; it doesn’t matter which observation is matched. This means that filtering joins never duplicate rows like mutating joins do:
+
+Anti-joins are the inverse of semi_joins in that they keep rows without matches. They are great for diagnosing mismatches in a dataset.
+
+- For example, when connecting flights and planes, you might be interested to know that there are many flights that don’t have a match in planes:
+```{r}
+flights %>%
+  anti_join(planes, by = "tailnum") %>%
+  count(tailnum, sort = TRUE)
+#> # A tibble: 722 × 2
+#>   tailnum     n
+#>   <chr>   <int>
+#> 1 <NA>     2512
+#> 2 N725MQ    575
+#> 3 N722MQ    513
+#> 4 N723MQ    507
+#> 5 N713MQ    483
+#> 6 N735MQ    396
+#> # ... with 716 more rows
+```
+Read the last two sections of this chapter in the textbook for tips on how to make sure joins run smoothly in your own data and how to troubleshoot difficulties.
+	
+# 5.7 Pipes for more readable workflows
+You’ve already used pipes %>%, but it’s worth us having a look at them to really get what’s going on with the, 
+
+Pipes are a tool that allow us to elegantly code data wrangling steps into a series of sequential actions on a single data frame. When used properly, pipes allow us to implement the same wrangling steps with less code.
+
+In this course we’ve learned how to use quite a few dplyr functions for data wrangling, including: 'filter', 'group_by', 'summarize', and 'mutate'. So far we’ve coded each of those functions as separate steps in your code. Let’s look at how pipes can be used to code all of those sequentially in a single statement. This reduces the amount of code written, the number of variables you produce and helps turn your code much more into a ‘sentence’ like structure. 
+
+Pipes come from the magrittr package which is a part of the tidyverse. You should already have tidyverse loaded for this R session, but if you don’t, you can also explicitly call in the magrittr package using library(magrittr).
+
+We are going to use a great example from the R4DS textbook and bring back some of the things we covered in Module 1. Remember functions? Yep, that’s right, we’ll use them here and do go back to the module 1 workshop manual if you need to revisit them. 
+
+Let’s explore pipes using code to tell a kids story about a little bunny named Foo Foo:
+
+Little bunny Foo Foo
+	Went hopping through the forest
+	Scooping up the field mice
+	And bopping them on the head
+```{r}
+foo_foo <- little_bunny()
+```
+And we’ll use a function for each key verb: hop(), scoop(), and bop(). Using this object and these verbs, there are (at least) four ways we could retell the story in code:
+1. Save each intermediate step as a new object.
+2. Overwrite the original object many times.
+3. Compose functions.
+4. Use the pipe.
+Let’s do them all sequentially now  now.
+1.  Saving each step as a new object:
+```{r}
+foo_foo_1 <- hop(foo_foo, through = forest)
+foo_foo_2 <- scoop(foo_foo_1, up = field_mice)
+foo_foo_3 <- bop(foo_foo_2, on = head)
+```
+
+The main downside of this form is that it forces you to name each intermediate element. If there are natural names, this is a good idea, and you should do it. But many times, like this in this example, there aren’t natural names, and you add numeric suffixes to make the names unique. That leads to two problems:
+
+The code is cluttered with unimportant names
+
+You have to carefully increment the suffix on each line.
+
+2. Overwrite the original object instead of creating intermediate objects at each step.
+```{r}
+foo_foo <- hop(foo_foo, through = forest)
+foo_foo <- scoop(foo_foo, up = field_mice)
+foo_foo <- bop(foo_foo, on = head)
+```
+This is less typing (and less thinking), so you’re less likely to make mistakes. However, there are two problems:
+
+Debugging is painful: if you make a mistake you’ll need to re-run the complete pipeline from the beginning.
+
+The repetition of the object being transformed (we’ve written foo_foo six times!) obscures what’s changing on each line.
+
+3. String the function calls together
+```{r}
+bop(
+  scoop(
+    hop(foo_foo, through = forest),
+    up = field_mice
+  ), 
+  on = head
+)
+```
+Here the disadvantage is that you have to read from inside-out, from right-to-left, and that the arguments end up spread far apart (evocatively called the dagwood sandwhich problem). In short, this code is hard for a human to consume.
+
+4. USE A PIPE 🙂
+```{r}
+foo_foo %>%
+  hop(through = forest) %>%
+  scoop(up = field_mice) %>%
+  bop(on = head)
+```
+
+This form focuses on verbs, not nouns. You can read this series of function compositions like it’s a set of imperative actions. Foo Foo hops, then scoops, then bops.
+ Behind the scenes, magrittr reassembles the code in the pipe to a form that works by overwriting an intermediate object. When you run a pipe like the one above, magrittr does something like this:
+```{r}
+my_pipe <- function(.) {
+  . <- hop(., through = forest)
+  . <- scoop(., up = field_mice)
+  bop(., on = head)
+}
+my_pipe(foo_foo)
+```
+
+
+This means that the pipe won’t work for two classes of functions:
+Functions that use the current environment. For example, assign() will create a new variable with the given name in the current environment:
+assign("x", 10)
+```{r}
+x
+#> [1] 10
+
+"x" %>% assign(100)
+x
+#> [1] 10
+```
+The use of assign with the pipe does not work because it assigns it to a temporary environment used by %>%. If you do want to use assign with the pipe, you must be explicit about the environment:
+```{r}
+env <- environment()
+"x" %>% assign(100, envir = env)
+x
+#> [1] 100
+```
+
+2. Functions that use lazy evaluation. In R, function arguments are only computed when the function uses them, not prior to calling the function. The pipe computes each element in turn, so you can’t rely on this behaviour.
+One place that this is a problem is tryCatch(), which lets you capture and handle errors:
+```{r}
+tryCatch(stop("!"), error = function(e) "An error")
+#> [1] "An error"
+
+stop("!") %>% 
+  tryCatch(error = function(e) "An error")
+#> [1] "An error"
+```
+There are a relatively wide class of functions with this behaviour, including try(), suppressMessages(), and suppressWarnings() in base R.
+
+While pipes are great, they are not always the best or only tool for the job. Here are three examples where you might want to consider a tool other than the pipe:
+
+Your pipes are longer than (say) ten steps. In that case, create intermediate objects with meaningful names. That will make debugging easier and it makes it easier to understand your code.
+
+You have multiple inputs or outputs. If there isn’t one primary object being transformed, but two or more objects being combined together, don’t use the pipe.
+
+You are starting to think about a directed graph with a complex dependency structure. Pipes are fundamentally linear and expressing complex relationships with them will typically yield confusing code.
+See here for other tools from the magrittr package to help you in these instances.
+
+# Workshop 5 - Spatial data in R
+
+6.1	Workshop schedule
+This workshop will show you how to do GIS in R. This is obviously a much larger task than what we can do in just a three hour workshop, but the procedures we will do today are really designed to just give you a taste, and prove that we can do many spatial things in R. 
+6.2 Workshop overview
+
+This workshop was developed by Associate Professor Chris Brown (University of Tasmania) and made available through his excellent website. By the end of the workshop, you will have learned how spatial data are stored in R (features and rasters, just like in ArcGIS or QGIS), how to handle some common map projections (remember your GIS!) and how to develop and export some simple maps. 
+
+With this brief understanding of GIS in R, you might want to join a map of Queensland regions with your QFISH data, and even advance your analysis all the way to showing some of your wrangling results in map format. With what you’ve learned in the last five workshops, this is absolutely possible for you to achieve. You might need to do some troubleshooting and learning from outside of this workbook, so go back to the introduction section and review some of the help options there. 
+6.3 R and how we can use it for spatial analyses
+
+As we have already learned in this workshop, R can be used for a range of purposes, including: 
+- creating publication quality data visualisations in the form of outstanding and high-impact plots using ggplot2
+- cleaning and wrangling data (so-called tidying) to help you get your data ready for downstream work such as statistics, visualisation and developing data summaries
+- performing complicated statistical analyses using the enormous number of R packages developed by the R developer community. 
+
+
+But did you know that R can also be used as a Geographic Information System (GIS)? Yep! If you want to - and some do - you can uninstall ArcGIS and QGIS and start to work solely in R for spatial analysis. 
+
+In general, R can do practically everything that the off-the-shelf GIS programs can do. It’s a little bit harder, but this offers a range of practical benefits:
+
+When you write code, you can iteratively improve it until it does exactly what you want. You don’t need to remember complex workflows based on mouse clicks and maintaining processing logs. 
+
+You can version control and backup your spatial analysis by hosting your script on github and using git for version control.
+
+If you don’t want to version control your analysis, at least you can keep it as a script so that if you ever have to run your analysis again it should be straightforward.
+
+In supporting reproducible and open science, you can provide your spatial analysis scripts for free to anyone who want to see how you’ve done your work. This means you can prove your results are robust, be ethical in the way you work, and scarce funds for marine research and conservation don’t have for someone else to repeat something that you may have already successfully finished - they can learn from you! 
+
+You can also interface your results directly with other components of the R system, such as obtaining results from your spatial analysis and then plotting them using ggplot2, or combining them with other datasets to gain deeper insights. This allows you to build ‘end-to-end’ analyses in a single script, taking your raw data, making some map figures, doing a spatial analysis, developing some high quality plots for data visualisation, and export your final figures. 
+
+As above, you could even do it all in knitr and R markdown to develop a full report within a single R script. Did you know that the entire text book we are using, R4DS, was written as an R script? 
+And of course, R is free! If you end up in a workplace with no funds to buy ArcGIS, you could make your maps in R for free. 
+
+In all of the workshops so far, we’ve learned that wrangling your data into a ‘tidy’ format allows you to more easily work with other packages such as ggplot2. This is also true when using R as a GIS. So, once again, we will be working in the tidyverse to make sure our data is clean and ready to be pumped through analyses.
+
+# 6.4 Installing the spatial R packages
+In this section we are going to learn how R can be used to wrangle and analyse spatial data by working through a case study involving copepod data. 
+
+We will be using an imported dataset, copepods_raw.csv, in this section, so be sure to organize your code appropriately to separate this workshop from previous sections. We will be using tidyverse so make sure it is loaded into your library for this session. We may also need to install and load packages sf, terra, leaflet and tmap and potentially also a base package in R called mgcv. Since we’re not sure about which ones we’ll ultimately use, and there’s very little cost to having many packages installed on your computer, just install them all in any case. 
+
+And don’t forget to comment out the #install.packages after you've installed the new packages. This stops you reinstalling your packages, and waiting for them, every time you run your script!
+
+If you are using your own computer there may be issues with installing some of these packages, depending on your operating system (potentially Mac users). Take the time to install now and check if there are any issues before we move forward. Instructors will try to help with any issues, but if they cannot you may need to switch to a lab computer for this section.
+```{r}
+# install and load your packages
+install.packages("sf") 
+install.packages("terra")
+install.packages("tmap")
+```
+```{r}
+#load into R library
+library(tidyverse)
+library(sf) # simple features
+library (terra) # for raster
+library(tmap) # Thematic maps are geographical maps in which spatial data distributions are visualized
+```
+# 6.5 Introduction to the problem
+Here we adapt A/Prof Brown’s statement of the problem. 
+You finally have a chance to meet one of your academic heroes. On meeting her, she mentions that she’s read your first PhD paper on zooplankton biogeography. She said she was particularly impressed with the extent of R analysis in your biogeography paper and goes on to suggest you collaborate on a new database she is ‘working with’.
+
+The database has extensive samples of copepod richness throughout Australia’s oceans and the Southern Ocean too. She has a hypothesis - that like many organisms, copepod species richness (which is the number of unique species) will be higher in warmer waters than cooler waters. But she needs help sorting out the data.
+
+First and foremost, she wants you to use your skills in R to help develop a map that could help you ‘get a look at’ whether this hypothesis is worth pursuing. 
+
+Your task now is - using R - to make a map of copepods in relation to temperature. 
+
+# 6.6 Loading the spatial dataset
+First of all, download the data here. Unzip it and put it in the data folder of your module 4 git repository folder.
+
+This is .zip file with a bunch of different files in it. A/Prof Brown explains:
+
+Your hero professor has sent you the data files in a .zip format. The spreadsheet copepods-raw.csv has measurements of copepod species richness from around Australia. Copepods are a type of zooplankton, perhaps the most abundant complex animals on the planet and an important part of ocean food-webs. 
+
+Like many distracted academics, she has also sent you some other data, but has not explained what it is all for yet. You’ll have to figure that out.
+
+Copepod species were counted using samples taken from a Continuous Plankton Recorder. The CPR was towed behind ‘ships of opportunity’ (including commercial and research vessels). ‘Silks’ run continuously through the CPR and the plankton are trapped onto the silks, kind of like a printer that runs all day and night to record plankton in the ocean.
+
+(The data you are using are in fact modified from real data, provided by Professor Ant Richardson at UQ. Ant runs a plankton lab that is collecting and processing this data from a program called AusCPR, find out more here.)
+
+So these data are what we’ll work with today. As a realistic learning experience, so be ready to face some errors in the data received from our distracted professor!
+
+Let’s get started with that copepod richness data. In this part of the course we are going to clean it up and run some basic analyses.
+
+We will load in the data using a package from the tidyverse called readr. readr is handy because it does extra checks on data consistency over and above what the base R functions do. 
+```{r}
+#load the copepod data into R studio
+library(readr)
+dat <- read_csv("copepod-data/data-for-course/copepods_raw.csv")
+dat
+```
+Notice here the silk_id column, which is just the ID for each of the silks, onto which plankton are recorded. 
+For processing, silks are divided into segments, so you will also see a segment_no column. The other columns are pretty self explanatory.
+
+# 6.7 Data exploration
+
+It is not at all uncommon to be given data by collaborators or other data providers that you may know very little about. You might have even found it on the internet, in a data archive, or as supplementary to a scientific paper. In every one of these cases, you need to make sure you understand the data and avoid errors, so it is always best to check it out with some visuals before moving to any analyses. 
+
+Since we don’t know this copepod data well and we haven’t been told much about it (and it lacks any metadata on what it all means), we need to thoroughly check it and make sure we understand it.
+
+You should have loaded all the relevant packages earlier in the section. For visualization we are using ggplot2 for graphs (which you should be very familiar with) and tmap for maps, which we will learn more about as we go along.
+
+
+# 6.7.1 Check coordinates
+
+The first step to making our first map using ggplot2  is to plot the coordinates for the samples (segments of the CPR silks)
+```{r}
+library(ggplot2)
+ggplot(dat) + 
+  aes(x = longitude, y = latitude, color = richness_raw) +
+  geom_point()
+```
+
+It should show the location of every segment and color the points by species richness. Notice how here the x and y axes are latitude and longitude, just like a map? That’s right, because remember from workshops 1 and 2 that the ggplot() function simply sets up an x-y coordinate grid ready to plot any point you want, simply by giving it an x and y value for those two variables. In this case we have latitude and longitude, a simple map! 
+
+This looks good. But do not this is not a map. It doesn’t have those critical things a real map needs, such as a projection (to bend or warp your data over a spherical global, the earth) so the real distances between these points when measured with a ruler are probably wrong. It’s simply a scatterplot, but is a nice and easy way to look at your spatial data. 
+
+So, now let’s look at the richness data (our main variable for analysis). This time we are going to visualize richness in a non-spatial way with latitude on the x-axis and richness on the y-axis. 
+
+You will soon note that it’s a fairly common part of the workflow to pop back and forth between spatial and non-spatial analyses. That’s one of the brilliant things about doing your spatial work alongside your analytical work in R.
+```{r}
+ggplot(dat, aes(x = latitude, y = richness_raw)) + 
+  stat_smooth() + 
+  geom_point()
+```
+When you’re developing your understanding of your dataset, in addition to obvious things such as looking at your raw data, like using View() to check out the raw data or printing the top 10 rows of your tibble, it’s also very handy to do lots of plots when getting to know your data, maps or not. Your brain is always the best tool for quickly spotting patterns in raw data.
+
+So, now you will note that something obviously looks odd with this graph, like there is an unnatural change in the data pattern at about latitude -40. What could cause this? Well who knows! Best here is to talk to your collaborator to try to work out what’s going on.
+
+Take some time to plot some other variables so you can get an understanding of what this dataset looks like.
+
+# 6.8 Getting going with maps
+
+We will now repeat the above map of richness, but this time using some of R’s specialist packages for GIS and mapping. Now we introduce those important components of a GIS, the ability to reference data to real locations on the planet, and bend it around a mostly spherical ball that is the earth. 
+
+Lucky for us R has some special packages developed specifically to do this.
+First, we will turn our point data into a spatially referenced data frame using the sf package (sf stands for ‘simple features’) which is an open standard for geospatial databases. For those that think in GIS, you can think of this format as a shapfile or feature collection.
+
+A great introduction to sf can be found in Geocomputation in R, which is free online. You should have already loaded the sf library into your session at the start of this section.
+
+Now, let’s turn our data into a ‘simple features collection’.
+```{r}
+sdat <- st_as_sf(dat, coords = c("longitude", "latitude"), 
+                 crs = 4326)
+```
+As is good practice (that I hope you’re learned by now!) use ?st_as_sf to see what else it can convert and what all these arguments mean.
+- st_as_sf converts different data types to simple features. 
+- dat is our original data. 
+- coords gives the names of the columns that relate to the spatial coordinates (in order of X coordinate followed by Y coordinate).
+- crs stands for coordinate reference system which we will discuss next.
+
+# 6.9 Coordinate reference systems
+
+You all have been introduced to some form of GIS before taking this module, so you should be familiar with coordinate reference systems. If you want to know more, feel free to go back to the Module 2 workbook (Introduction to GIS) and lectures from our LearnJCU site to read a bit more or revisit your learning on these. 
+
+In short, coordinate reference systems are required for 2D mapping to compensate for the lumpy, spherical (3D) nature of the earth. Read this link for a basic introduction if you can’t remember. 
+
+In mapping, we refer to the reference point as datum and the lumpy spherical earth model as an ellipsoid. Together, these make a geographic coordinate reference system (GCS), which tells us where the coordinates of our copepod data are located on the earth.
+
+GCS’s are represented by angular units (i.e. longitude and latitude), usually in decimal degrees. Our copepod coordinates are long-lat, so we chose a common ‘one-size-fits-all’ GCS called WGS84 to define the crs using the EPSG code 4326. 
+What is an EPSG code? It’s a unique, short-hand code for a specific coordinate reference system (CRS).
+
+In R, best practice is to either use an EPSG code or Well-known text (WKT) to define a CRS. A WKT string contains all of the detailed information we need to define a crs, but is cumbersome if you don’t need all of the detail. Read this for a more complete overview.
+
+It’s easy to find out all of the above for a chosen crs in R. For example, for the EPSG code 4326 we can find out: 1) what the name of this crs is, 2) the corresponding proj4string, and 3) the WKT
+
+```{r}
+crs4326 <- st_crs(4326)
+crs4326 # look at the whole CRS
+crs4326$Name # pull out just the name of the crs
+```
+Now check out what the WKT looks like.
+```{r}
+crs4326$wkt # crs in well-known text format
+```
+
+When we make a 2-dimensional map in WGS84 GCS, we assume that a degree is a linear unit of measure (when in reality it’s angular).
+To more accurately map our data in 2 dimensions, we need to decide how to ‘project’ 3 dimensions into 2. 
+
+There are many ways to do the projection depending on where we are in the world and what we’re most interested in preserving (e.g., angles vs. distances vs. area). Projections are defined by a projected coordinate reference system (PCS), and spatial packages in R use the software PROJ to do this.
+
+If you want to learn more about projections, try this blog.
+
+To find the most appropriate projected crs for your data, try the R package crs suggest.
+
+
+# 6.10 Feature collection (points)
+
+Let’s now look at what we created with sdat. 
+```{r}
+sdat
+```
+
+The data table in sdat looks much like dat did, but note it now has a geometry column. This is where the coordinates (just one point for each data row) are stored. More complex simple features could have a series of points, lines, polygons or other types of shapes nested in each row of the geometry column.
+
+The nice thing about sf is that because the data is basically a dataframe with a geometry, we can use all the operations that work on dataframes on sf simple features collections.
+
+These include data wrangling operations like inner_join, plotting operations from ggplot2 and model fitting tools too (like glm).
+
+sf also adds geometric operations, like st_join which do joins based on the coordinates. More on this later.
+
+So in summary, a simple feature is like a shapefile, in that it holds a lot of data in columns and rows but is spatially aware. Essentially, that includes extra columns regarding each rows position (in coordinates) and metadata about the coordinate reference system, the type of geometry (Point) and so on.
+
+
+# 6.11 Cartography
+
+Now let’s get into the mapping. sf has simple plotting features, like this:
+```{r}
+plot(sdat["richness_raw"])
+```
+Here we have only plotted the richness column. If we used plot(sdat) it would create a panel for every variable in our dataframe. In sf, we can use square brackets ["richness_raw"] to select a single variable.
+```{r}
+plot(sdat)
+```
+# 6.12 Thematic maps for communication
+
+So far in this module we’ve used ggplot2 for doing our plots and graph-based data vis, but there are many other ones out there that might offer some different functionalities. The same goes for mapping, there are many nice packages out there to help make pretty maps. 
+
+In this module we will use tmap. tmap works similarly to ggplot2 in that we build and add on layers. Here we only have one layer from sdat. We declare the layer with tm_shape() (in this case sdat), then the plot type with the following command.
+```{r}
+tm1 <- tm_shape(sdat) + 
+  tm_dots(col = "richness_raw")
+```
+
+```{r}
+#using tmap
+
+tm_shape(sdat) + 
+  tm_dots(col = "richness_raw")
+```
+- tm_dots to plot dots of the coordinates. Other options are tm_polygons, tm_symbols and many others we’ll see later.
+- We’ve chosen "richness_raw" as the color scale
+
+
+Note: you can customize these plots in a number of ways.
+
+Try to customise it, how about working out how to use a different colour ramp?
+
+Use tmap_save to save the map to your working directory. Remember to change the output path if you need to save it to a different folder.
+```{r}
+tmap_save(tm1, filename = "Richness-map.png", 
+          width = 600, height = 600)
+```
+
+
+6.13 Mapping spatial polygons as layers
+
+
+As mentioned earlier, sf package can handle many types of spatial data, including shapes like polygons. To practice with polygons we will load in a map of Australia and a map of Australia’s continental shelf using tmap to add these layers.
+
+# 6.13.1 Loading shapefiles
+
+Unlike the data we just mapped, which was a csv file with coordinate columns, the polygons in this copepod data are stored as shapefiles. 
+
+Note that .shp files are generally considered an undesirable file format because they are inefficient at storing data and to save one shapefile you actually create multiple files. This means bits of the file might be lost if you transfer the data somewhere else. Even in GIS software these days, we are moving well away from shapefiles to use other data formats.
+
+A better format than shapefile is the Geopackage which can save and compress multiple different data types all in a single file. Read more about different file formats here.
+
+We are working with shapefiles in this case study because it is still the most likely format you’ll encounter when someone sends you a spatial dataset, but I encourage you to save your personal data in the .gpkg format as you move forward.
+
+We can read shapefiles directly into R with the st_read command (which is like read_csv, but for spatial files):
+```{r}
+aus <- st_read("data-for-course/spatial-data/Aussie/Aussie.shp")
+```
+
