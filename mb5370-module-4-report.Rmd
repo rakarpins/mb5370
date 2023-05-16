@@ -32,7 +32,8 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 
 
 
-# Workshop 3...
+# Workshop 3
+installing github
 
 # Workshop 4 - Data wrangling in R
 5.1	Workshop schedule
@@ -45,7 +46,7 @@ Note that at the end of this workshop you will be set to begin your second assig
 5.2	Workshop overview
 This three hour workshop will follow the data wrangling section of the R4DS textbook. It aims to give you an expert understanding of how to take a tabular dataset and prepare it in any way you need. Data wrangling is crucial in order to actually use your valuable data!
 
-5.2.1	Objectives
+# 5.2.1	Objectives
 Today we will focus on data wrangling using tidyr. We will:
 Learn about tibbles as a basis of tidyr, a new kind of data frame.
 
