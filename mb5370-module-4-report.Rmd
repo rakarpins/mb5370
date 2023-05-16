@@ -4,36 +4,740 @@ author: "Rachel Karpinski"
 date: "2023-05-04"
 output: html_document
 ---
- 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+
+### Module 4- Data science: Workshop 1
+
+# 2.4	Installing the tidyverse
+First, you’ll need to install the tidyverse. You may get an error if R is out of date, so please work through any of the guidance provided by the error message.
+
+```{r}
+install.packages("tidyverse")
+
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+library(tidyverse)
 ```
 
-## Including Plots
+For example, if you receive an error about failing to load the tidyverse, try to use remove.packages('rlang') to uninstall it and then reinstall with install.packages('rlang') to get the latest version. You’ll need to restart RStudio as well.
 
-You can also embed plots, for example:
+# 2.5	Obtain the data
+To provide the strongest foundation in ggplot2 possible, and fully understand its functionality, it’s important to remove any component of data interpretation or uncertainty from the learning experience. We will therefore use the dataset provided with ggplot2, which is particularly designed to help you understand the functionality of the R package without being concerned about data issues, data wrangling (yet!) or even importing the dataset.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+The mpg data frame found in ggplot2 is a dataset with observations (234 rows of data) and variables (in the columns). Have a look at the data frame by typing it into the R console.
+
+```{r}
+mpg
 ```
- 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+The variables in the mpg data frame include:
+- disp, which is the engine size of the cars in litres
+- hwy, which is the cars fuel efficiency in miles per gallon (mpg). A car with a low fuel efficiency consumes more fuel than a car with a high fuel efficiency when they travel the same distance.
+
+If you want to know more about this dataset, you can use ?mpg.
 
 
+# 2.6 Create your first ggplot
+We want to create our first plot of this dataset. Using ggplot2, you can plot the data (data = mpg) and then put the size of the engine (displ) on the x axis and the fuel efficiency (hwy) on the y axis. 
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+```
+# the first line of code gives r the coordinates (otherwise it would give only a grey box)
+# aes give the variable to the axis
+# plotted engine size vs fuel efficiency
+From the R for Data Science textbook (note that all indented text in this manual is directly from this textbook):
+The plot shows a negative relationship between engine size (displ) and fuel efficiency (hwy). In other words, cars with big engines use more fuel. Does this confirm or refute your hypothesis about fuel efficiency and engine size?
+
+With ggplot2, you begin a plot with the function ggplot(): 
+ggplot() creates a coordinate system that you can add layers to. The first argument of ggplot() is the dataset to use in the graph. So ggplot(data = mpg) creates an empty graph, but it’s not very interesting so I’m not going to show it here.
+
+You complete your graph by adding one or more layers to ggplot():
+The function geom_point() adds a layer of points to your plot, which creates a scatterplot. ggplot2 comes with many geom functions that each add a different type of layer to a plot. You’ll learn a whole bunch of them throughout this chapter.
+
+Each geom function in ggplot2 takes a mapping argument. This defines how variables in your dataset are mapped to visual properties. The mapping argument is always paired with aes(), and the x and y arguments of aes() specify which variables to map to the x and y axes. ggplot2 looks for the mapped variables in the data argument, in this case, mpg.
+
+
+
+## 2.7 Understand the ‘grammar of graphics’
+# 2.7.1 Graphing template
+One thing that can greatly help your ability to develop plots using ggplot2 is to use a template. In all cases, your ggplot code will follow a generic template the same as that below. You will always call ggplot, offer it data, and then provide a geom function with a collection of mappings, which dictate how your plot will look.
+
+ggplot(data = <DATA>) + 
+  <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
+
+
+# 2.7.2 Aesthetic mappings
+In addition to simply plotting coordinates of x, y data, you can add a third variable, such as class, by mapping it to an aesthetic. 
+What is an aesthetic? Well, this is a visual property of the objects you’ve already plotted, and can include things like:
+- size
+- shape
+- colour
+
+So when you’re creating a plot, you essentially need two attributes of a plot: a geom and aesthetics.
+
+Try the following exercises to explore the aesthetic mapping available to you. 
+You can convey information about your data by mapping the aesthetics in your plot to the variables in your dataset. For example, you can map the colors of your points to the class variable to reveal the class of each car.
+
+To map an aesthetic to a variable, associate the name of the aesthetic to the name of the variable inside aes(). ggplot2 will automatically assign a unique level of the aesthetic (here a unique color) to each unique value of the variable.
+
+Change point colour by class.
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, colour = class))
+```
+Note above we mapped class to colour, but you can map to the size aesthetic in exactly the same way. Note how the sizes of the points now represent the class of car. Also note how ggplot2 gives you at least a little bit of guidance about what makes good data visualisation (ie. don’t plot a variable which is not continuous to a continuous aesthetic like size). 
+
+Change point size by class.
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, size = class))
+#> Warning: Using size for a discrete variable is not advised. 
+
+Change point transparency by class (alpha). Here the alpha aesthetic is what dictates the transparency. Also consider trying a simple number, like 0.3 to this aesthetic.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
+
+```
+# Warning: [38;5;232mUsing alpha for a discrete variable is not advised
+
+Change point shape by class.
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class))
+
+```
+Warning: The shape palette can deal with a maximum of 6 discrete values because more than 6 becomes difficult to discriminate; you have 7. Consider specifying shapes manually if you must have them.
+Warning: [38;5;232mRemoved 62 rows containing missing values (`geom_point()`).[39m
+
+You can also set these properties manually, such as by offering a number or a colour. Let’s make all of our points blue. 
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+
+In this example it simply changes the appearance of the plot, it doesn’t show anything about the nature of the variable you’ve plotted. That’s fine, but make sure it makes sense from a data viz point of view. 
+
+There are a range of manual aesthetics you can set to manually alter the appearance of your plot. THese include:
+- The name of a color as a character string.
+- The size of a point in mm.
+- The shape of a point as a number, as shown in Figure 3.1.
+
+A question to try out:
+What happens if you map an aesthetic to something other than a variable name, like aes(colour = displ < 5)? Note, you’ll also need to specify x and y.
+
+# 2.8 Troubleshooting
+As with all programming you’ll run into some problems. That’s no worries, it’s very common for data scientists or analysts to have to keep testing and trying (no one gets it first go!). 
+
+As in module 1, from this point forward I will add in some minor errors to the code here to avoid you simply cutting and pasting this code. The idea is that you learn to read the code and debug your problems.
+
+Despite this, there will be some other common problems you’re likely to face. Perhaps the main one with ggplot is having the + in the wrong place. It has to go at the end of the line (not the start of the next line), which is particularly important if you’re running your script line-by-line.
+Example:
+```{r}
+ggplot(data = mpg) +
+ geom_point(mapping = aes(x = displ, y = hwy)) 
+# the + should be on top line
+
+```
+As with all programming, there are some really useful methods for debugging your code. Revisit the Module 1 workshop where we discussed using online help, reading the R help pages, learning to read your own code carefully and precisely, and trying to interpret the error messages you’ve received. 
+
+As a very last resort, you can always ask the instructor (who will probably just tell you to do the above anyway).
+
+
+
+
+# 2.9 Facet and panel plots
+If you’ve read the scientific literature, you’ll note that a common practice is to break a single complex plot into many sub plots (or panels). This allows you to develop separate plots for a range of reasons, most often to show a subset of your data. 
+
+In ggplot2, you’ll typically do this using facets.
+
+To facet your plot using a single variable, use facet_wrap(). Facet wrap syntax is in the function of a formula (kind of like a linear model formula), where the ~ dictates which variable you want to subset your data with. 
+
+Note: only use facet_wrap() for discrete variables.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_wrap(~ class, nrow = 2)
+
+```
+
+If you want to do this with more than one variable, then use facet_grid(). Here you need two variables using ~ to split them up.
+
+Facet plot on the combination of two variables using facet_grid(). facet_grid needs two variables separated by a ~.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_grid(drv ~ cyl)
+```
+
+
+
+Use a . if you do not want to facet in the rows or column dimension. Note what happens in this case:
+… + 
+facet_grid(. ~ cyl)
+
+
+Exercise:
+- Read ?facet_wrap. What does nrow do? What does ncol do? What other options control the layout of the individual panels? 
+
+You’ll note that with a tool like this, you can get very close to building publication quality plots directly in ggplot2, at a quality where you probably don’t need to do any formatting in Microsoft Word to handle the panelling problem.
+
+
+# 2.10 Fitting simple lines
+An outstanding feature of ggplot2 is that you can use a variety of visual objects to represent your data. So far we have used points that are plotted at the coordinate location of the x and y axes for each data point.
+
+To display data as points, use geom_point().
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+```
+However, ggplot2 can use a variety of geom objects to represent the data. Here, we might want to use bar plots, line charts, boxplots and so on. Well we can handle this issue in ggplot directly using a different geom to plot the same data. Here, instead of plotting points, we will use a smooth line. 
+
+To display the same data as a smooth line fit through the points use geom_smooth().
+
+```{r}
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+
+```
+
+
+So let’s recap. A geom is an object that your plot uses to represent the data. To change the geom type in your plot, simply change the geom function that you add to your plot. It’s sometimes the case you might simply want to try som out, in which case you could use comments given the way we iteratively build ggplots by adding new instructions to the plot statements.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy)) # try smooth line
+#  geom_point(mapping = aes(x = displ, y = hwy)) # points horrible
+```
+You can also change the line type, and like we did with colours you can use a variable to control it. Note here it doesn’t make much sense, but you can see we have different types of dashes when we use the linetype argument with geom_smooth(), which separates the cars into three lines based on their drv (front wheel, rear wheel or 4wd) value.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy, linetype = drv))
+
+```
+It might be hard to to understand what’s going on, but here you can see we are fitting a smooth line to different subsets of the data
+
+Here we have two geoms on the same graph (points and lines)! 
+ggplot2 has over 40 different geoms! Have a look at the ggplot2 cheatsheet for some examples - all of the below in yellow are different geoms you can use for different things. 
+
+
+This is getting fairly exciting and shows how flexible ggplot2 can be, but let’s lock in some ideas before moving onto making our own plots with multiple geoms. 
+
+So far we’ve only made fairly simple plots, but what happens if you want o to group objects by a categorical variable (like species or sex or site)? Here we will use the group argument to show that our data is in fact grouped - it won’t add a new legend but can easily be used to vary your plots by the discrete variable.
+
+Set the group aesthetic to a categorical variable to draw multiple objects
+```{r}
+ ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy, group = drv))
+
+```
+
+Change the color of each line based on drv value
+```{r}
+ggplot(data = mpg) +
+  geom_smooth(
+    mapping = aes(x = displ, y = hwy, color = drv),
+    show.legend = FALSE,
+  )
+
+```
+
+Now, let’s increase our complexity even more. Here we will plot multiple geoms on the single plot. All you need to do is to add them together. This one is nice for showing the underlying data and how it relates to the geom_smooth line.
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+
+```
+
+Exactly what we often want to do. However, note how the top and second rows are simply duplicated, meaning if you wanted to change the x variable in your plot, you’d need to change it in several locations?
+
+This is not ideal in a programming sense, and can increase the chance you’ll make an error. Therefore, ggplot allows you to pass these ‘overarching’ mappings to the ggplot() argument, making them global mappings that are applied to every single subsequent geom. Much in the same way that the data argument is also global, it is used every time a geom is called.
+
+Here’s an example of where we make the the exact same plot as above, but it is programmatically more efficient and makes it easy for you to simply change a variable that you want to plot on the x or y axis. 
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+
+```
+
+The extra nice thing is that you can still use mappings under ggplot() to reduce duplications in code (like in the above code). This is super handy, particularly if you want to change point styles or develop your own customisations. 
+
+Use mappings in specific layers to enable the display of different aesthetics in different layers (super handy!). Note how the line is note styled by class but you can style the points by themselves.
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth()
+
+```
+
+The same goes if you want to specify different data for each layer. Here we use a filter (class = "subcompact") to select a subset of the data and plot only that subset. 
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth(data = filter(mpg, class == "subcompact"), se = FALSE)
+
+```
+
+You will learn what exactly filter() does later on in this module, but for now note how it just shows a small subset of the dataset.
+
+Exercise:
+What geom would you use to draw a line chart? A boxplot? A histogram? An area chart?
+
+Run this code in your head and predict what the output will look like. Then, run the code in R and check your predictions.
+Will these two graphs look different? Why/why not?
+```{r}
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+
+ggplot() + 
+  geom_point(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_smooth(data = mpg, mapping = aes(x = displ, y = hwy))
+
+```
+
+## 2.11 Transformations and Stats
+We are going to learn about easy transformations and data summaries using another dataset provided in ggplot2, specifically to support the teaching of transformations.  The diamonds dataset comes in ggplot2 and contains information about ~54,000 diamonds, including the price, carat, color, clarity, and cut of each diamond.
+
+# 2.11.1 Plotting statistics
+Our first bar chart shows that more diamonds are available with high quality cuts than low quality cuts.
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut))
+
+```
+
+From our textbook:
+On the x-axis, the chart displays cut, a variable from diamonds. On the y-axis, it displays count, but count is not a variable in diamonds! Where does count come from? Many graphs, like scatterplots, plot the raw values of your dataset. Other graphs, like bar charts, calculate new values to plot:
+- bar charts, histograms, and frequency polygons bin your data and then plot bin - counts, the number of points that fall in each bin.
+- smoothers fit a model to your data and then plot predictions from the model.
+- boxplots compute a robust summary of the distribution and then display a specially formatted box.
+
+The algorithm used to calculate new values for a graph is called a stat, short for statistical transformation. 
+
+Now this incredible functionality of ggplot2 will open up a wealth of ways you can visualise your data, without the need to fit statistical models or summarise your dataset! It’s hard to describe how time-saving this can be, especially since this feature is as flexible as the rest of ggplot2.
+
+You can generally use geoms and stats interchangeably. For example, you can recreate the previous plot using stat_count() instead of geom_bar()
+
+```{r}
+ggplot(data = diamonds) + 
+  stat_count(mapping = aes(x = cut))
+```
+
+The main reason this is so easy is because every geom has a default stat and every stat has a default geom, which means you don’t need to worry about what’s going on. 
+
+# 2.11.2 Overriding defaults in ggplot2
+But like in general R and even ArcGIS, it’s important to understand the defaults are not the only thing you can do. Indeed, that defaults are there in the first place can have big implications for your results, so you should always make an effort to understand any of these ‘black box’ outputs. 
+
+What is the default? How can it change? What’s it doing to my work?
+You might want to override a default stat now that you understand what the default is. Change the default stat (which is a count, a summary) to identity (which is the raw value of a variable).
+
+Add don’t worry yet about tribbles, we will learn what a tribble is soon. Basically a dataframe.
+```{r}
+demo <- tribble(
+  ~cut,         ~freq,
+  "Fair",       1610,
+  "Good",       4906,
+  "Very Good",  12082,
+  "Premium",    13791,
+  "Ideal",      21551
+)
+demo
+
+ggplot(data = demo) +
+  geom_bar(mapping = aes(x = cut, y = freq), stat = "identity")
+
+```
+
+You can also override a default mapping from transformed variables to aesthetics. For instance, you could display a bar chart of proportion of your total diamond dataset rather than a count.
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, y = stat(prop), group = 1))
+#> Warning: `stat(prop)` was deprecated in ggplot2 3.4.0.
+#> ℹ Please use `after_stat(prop)` instead.
+
+```
+
+# 2.11.3 Plotting statistical details
+You might also want to show a little more about these transformations in your plot, which is good practive to be transparent about uncertainty or any other limitation of your data. 
+You can do this using stat_summary().
+```{r}
+ggplot(data = diamonds) + 
+  stat_summary(
+    mapping = aes(x = cut, y = depth),
+    fun.min = min,
+    fun.max = max,
+    fun = median
+  )
+
+```
+
+# 2.12 Positional adjustments
+Now here’s another way to boost the way you can convey information with plots using ggplot2. You can use colour or fill to change aspects of bar colours.
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, y = after_stat(prop)))
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = color, y = after_stat(prop)))
+
+```
+
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, colour = cut))
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = cut))
+
+```
+And now, try using these aesthetics to colour by another variable like clarity. Notice how the stacking is done automatically. This is done behind the scenes with a position argument.
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity))
+
+```
+The ability to make position adjustments is vital, it allows you to customise your plots in three ways, identity (raw data), fill (changes heights) and dodge (which forces ggplot2 to not put things on top of each other)
+
+- If you use position = "identity", you will be able to place each object exactly where it falls in the context of the graph. This is vital for point charts like scatter plots but makes a mess in a bar plot situation by showing too much information (a bar plot generally summarises information). We will need to alter the bar aesthetic.
+
+```{r}
+
+#To alter transparency (alpha)
+ggplot(data = diamonds, mapping = aes(x = cut, fill = clarity)) + 
+  geom_bar(alpha = 1/5, position = "identity")
+
+#To color the bar outlines with no fill color
+ggplot(data = diamonds, mapping = aes(x = cut, colour = clarity)) + 
+  geom_bar(fill = NA, position = "identity")
+
+```
+- position = "fill" works like stacking, but makes each set of stacked bars the same height.
+```{r}
+
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "fill")
+
+```
+
+- position = "dodge" places overlapping objects directly beside one another.
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "dodge")
+```
+
+One bonus position adjustment is jitter, which slightly moves points so you can see them all (especially when they overlap). I’m sure you’ve seen really nice box plots with jittered points all over them, which you handle with this function.
+- position = "jitter" adds a small amount of random noise to each point to avoid overplotting when points overlap. This is useful for scatterplots but not barplots.
+
+```{r}
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), position = "jitter")
+
+```
+
+# 2.13 The layered grammar of graphics
+The sections above have given you the foundation to make almost any type of plot you want to in ggplot2. 
+
+It’s good now to update our template for making a ggplot2. Here it is, with position adjustments, stats, and faceting (recall how facets made us panel plots of subsets?). 
+
+Later in this module we’ll learn about coordinates, which allow for mapping, but for now let’s keep it this simple. Most of the time you won’t need to populate all of these, because ggplot2 has defaults for most of them, but overall you have enough here to build almost any plot.
+
+ggplot(data = <DATA>) + 
+  <GEOM_FUNCTION>(
+     mapping = aes(<MAPPINGS>),
+     stat = <STAT>, 
+     position = <POSITION>
+  ) +
+  <FACET_FUNCTION>
+
+
+# Workshop 1: Homework
+# improve an old graph
+
+
+
+## Workshop 2
+
+Now that we have the strongest foundation possible in understanding how ggplot2 allows us to flexibly build just about any graph we want, we can begin to focus on the aspects of data viz that make an ok plot an excellent plot. Previously, our plots were useful for data exploration, but now we want to start focusing on how we communicate our results in an effective and repeatable manner. 
+This part of data viz allows you to bring in your own creativity and, as such, can be fun, slightly addictive, and will enable you to meet your aspirations of building quality outputs from any programmed workflow you now develop. 
+Now it’s time to learn the customisation functions available to you in ggplot2. Some of these require skills you’ll learn in the data wrangling parts of this module, so if anything pops up that you don’t yet understand, that’s ok, we’ll cover it soon.
+
+# 3.1 Labels
+Good labels on plots can help you communicate your key findings, or even comply with the formatting requirements of any outlet (like a scientific journal or your company’s preferred style).
+In ggplot2, you add labels with the labs() function. Let’s start with a title.
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se.e = FALSE) +
+  labs(title = "Fuel efficiency generally decreases with engine size")
+```
+
+
+If you need to add more text, you can use a couple of other functions:
+subtitle adds additional detail in a smaller font beneath the title and caption adds text at the bottom right of the plot 
+caption adds text at the bottom right of the plot, often used to describe the source of the data.
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Fuel efficiency generally decreases with engine size",
+    subtitle = "Two seaters (sports cars) are an exception because of their light weight",
+    caption = "Data from fueleconomy.gov"
+  )
+```
+
+
+
+You can also use labs() to replace axis labels and legend titles.
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    x = "Engine displacement (L)",
+    y = "Highway fuel economy (mpg)",
+    colour = "Car type"
+  )
+```
+There are a few more things you can do with labels, including mathematical notations and superscripts, read the ggplot2 help for the function to find out.
+
+# 3.2 Annotations
+But what if you want to add text to the plot itself? Sometimes you’ll want to do this to highlight a single observation, for instance. Here you can use geom_text() to add textual labels to your plots. This works in the same way as geom_point() but rather than a shape geometry it can add a label. 
+Here we will filter the data (more to come on this in the next workshop!) and add a label that calls in the values from the data frame. This is really neat, because it allows us to pull data values out (like the most fuel efficient car!) from the data itself and include it in the plot. This is particularly nice when these might change on an update of the data. 
+
+```{r}
+best_in_class <- mpg %>%
+  group_by(class) %>%
+  filter(row_number(desc(hwy)) == 1)
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  geom_text(aes(label = model), data = best_in_class)
+```
+
+
+Although the labels overlap, there are ways you can handle that issue if you ever find it a problem. These include a nudge() function to move your text a certain amount and using other R packages to handle text wrapping etc. 
+
+Labels are great and allow lots of customisation, even allowing actions such as highlighting the maximum or minimum value, which you can obtain using base R functions (allowing them to change if your data change). 
+
+We won’t cover the ins and outs of these here, we just want you to know that you can use labels, they’re super flexible, and allow you develop professional and polished outputs.
+
+# 3.3 Scales
+Changing the default scales on ggplot2 can also help you customise your plots and allow improved communication of your results. 
+Normally, ggplot2 automatically adds scales for you. For example, when you type:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class))
+```
+ggplot2 automatically adds default scales behind the scenes.
+
+However, if you want to tweak them you can do it by offering values to the scale parameters, simply try adding numbers in the appropriate scale arguments.
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  scale_x_continuous() +
+  scale_y_continuous() +
+  scale_colour_discrete()
+```
+
+
+# 3.4 Axis ticks
+You can also change the ticks on your axes. Breaks controls the position of the ticks and you can use labels as an argument to change the text label associated with ticks. 
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  scale_y_continuous(breaks = seq(15, 40, by = 5))
+```
+
+
+What does seq do? Try running 
+```{r}
+seq(15, 40, by = 5)
+    ```
+Similarly, you can use labels set to NULL to suppress the labels altogether. This is sometimes an option if you’re trying to format your plots in a particular way. 
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  scale_x_continuous(labels = NULL) +
+  scale_y_continuous(labels = NULL)
+```
+
+
+# 3.5 Legends and colour schemes
+Sometimes you might want to change the position of your legend, perhaps to make the plot itself as wide as possible (e.g. put the legend underneath) or to hide it all together. 
+To control the overall position of the legend, you need to use a theme() setting. 
+```{r}
+base <- ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class))
+
+base + theme(legend.position = "left")
+base + theme(legend.position = "top")
+base + theme(legend.position = "bottom")
+base + theme(legend.position = "right") # the default
+```
+You can also use legend.position = "none" to suppress the display of the legend altogether!
+
+# 3.6	Replacing a scale
+There are two types of scales you’re mostly likely to want to switch out: continuous position scales and colour scales.
+It’s very useful to plot transformations of your variable. For example, as we’ve seen in diamond prices it’s easier to see the precise relationship between carat and price if we log transform them using a ggplot2 function for scale precisely for this purpose.
+```{r}
+ggplot(diamonds, aes(carat, price)) +
+  geom_bin2d() + 
+  scale_x_log10() + 
+  scale_y_log10()
+```
+
+Another scale that is frequently customised is the colour scale. In fact, from a data visualisation point of you, this one is among the most important changes you can make to a base ggplot.
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv))
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv)) +
+  scale_colour_brewer(palette = "Set1")
+```
+If there are just a few colours, you can add a redundant shape mapping. This will also help ensure your plot is interpretable in black and white.
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv, shape = drv)) +
+  scale_colour_brewer(palette = "Set1")
+```
+The ColorBrewer scales are documented online at http://colorbrewer2.org/. THere are a range of different colour schemes you can import such as this, so read more about them in the ggplot2 cookbook: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/ 
+
+
+When you have a predefined colours you want to use you can set them yourself, using scale_colour_manual()
+```{r}
+presidential %>%
+  mutate(id = 33 + row_number()) %>%
+  ggplot(aes(start, id, colour = party)) +
+    geom_point() +
+    geom_segment(aes(xend = end, yend = id)) +
+    scale_colour_manual(values = c(Republican = "red", Democratic = "blue"))
+```
+
+Or one of the hottest colour packages out there now, even used in my own published work, the viridis colour scheme. Once you’ve tried this one you’ll start to see it everywhere!
+
+To use it, simply use scale_colour_viridis() provided by the viridis package
+```{r}
+install.packages('viridis')
+install.packages('hexbin')
+```
+
+```{r}
+library(viridis)
+library(hexbin)
+```
+
+```{r}
+df <- tibble( # note we're just making a fake dataset so we can plot it
+  x = rnorm(10000),
+  y = rnorm(10000)
+)
+ggplot(df, aes(x, y)) +
+  geom_hex() + # a new geom!
+  coord_fixed()
+
+ggplot(df, aes(x, y)) +
+  geom_hex() +
+  viridis::scale_fill_viridis() +
+  coord_fixed()
+```
+
+# 3.7 Themes
+And finally, now you can customise the entire theme of your plot. Themes allow you to change some or all of the non-data elements of your plot with a theme.
+ggplot2 has eight themes by default. Many more are included in add-on packages like ggthemes (https://github.com/jrnold/ggthemes), by Jeffrey Arnold.
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  theme_bw()
+```
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  theme_light()
+```
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  theme_classic()
+```
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  theme_dark()
+```
+One particularly nice thing you can do though, is to develop your own themes simply by setting some or all of the arguments to theme() yourself. Here’s one I wrote so that my plots are always the same style:
+
+```{r}
+ theme (panel.border = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        legend.position="bottom",
+        legend.title=element_blank(),
+        legend.text=element_text(size=8),
+        panel.grid.major = element_blank(),
+        legend.key = element_blank(),
+        legend.background = element_blank(),
+        axis.text.y=element_text(colour="black"),
+        axis.text.x=element_text(colour="black"),
+        text=element_text(family="Arial")) 
+```
+
+
+# 3.8 Saving and exporting your plots
+Well, now you’ve iteratively developed your plot, you want to save it to disk in some format that allows you to import into your report or to share it with the world. 
+
+In general, the best way to make a single file will be to export it using the ggsave() function. 
+
+There are two main ways to get your plots out of R using ggplot2. ggsave() will save the most recent plot to your working directory. 
+```{r}
+ggplot(mpg, aes(displ, hwy)) + geom_point()
+
+ggsave("my-plot.pdf")
+#> Saving 7 x 4.32 in image
+```
+Sometimes, you’ll want to play with the dimensions of your plot, in which case you can use the width and height arguments to this function. Try it!
+Note that you can alternatively export your results, together with your code, using R markdown via knitr. 
 
 
 # Workshop 3
-installing github
+Installing github
+```{r}
+install.packages("usethis")
+```
+
+```{r}
+library(usethis)
+```
+
+```{r}
+use_git_config(user.name = "nick-murray", user.email = "nicholas.murray@jcu.edu.au")
+```
+
+
 
 # Workshop 4 - Data wrangling in R
 5.1	Workshop schedule
