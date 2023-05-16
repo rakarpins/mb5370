@@ -733,11 +733,6 @@ install.packages("usethis")
 library(usethis)
 ```
 
-```{r}
-use_git_config(user.name = "nick-murray", user.email = "nicholas.murray@jcu.edu.au")
-```
-
-
 
 # Workshop 4 - Data wrangling in R
 5.1	Workshop schedule
