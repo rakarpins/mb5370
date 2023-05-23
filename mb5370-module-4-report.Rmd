@@ -466,8 +466,34 @@ ggplot(data = <DATA>) +
 
 # Workshop 1: Homework
 # improve an old graph
+```{r}
+library(ggplot2)
+library(dplyr)
+```
 
 
+```{r}
+avocado_data_Sheet1
+```
+
+```{r}
+mycolors = c("#A6611A", "#DFC27D", "#6e6c6b", "#80CDC1", "#018571" )
+
+avocado_data_Sheet1 %>%
+  mutate(isNortheast = (region == 'Northeast')) %>%
+  ggplot(aes(x = Date, y = AveragePrice, color = region)) +
+  geom_line(aes(linetype = isNortheast), size = 1.5, alpha = 0.8) +
+  labs(title = "Average Avocado Prices in the US Over Time",
+       subtitle = "How do avocado prices differ by region?",
+       x = "Date",
+       y= "Average Price",
+       color = "Region") +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  scale_linetype_manual(values = c("dashed", "solid"), guide = "none") +
+  scale_color_manual(values = mycolors)
+  
+```
 
 ## Workshop 2
 
@@ -733,6 +759,37 @@ install.packages("usethis")
 library(usethis)
 ```
 
+# homework
+
+Export data as a csv from QFISH website and import it into figs < mb5370 < Github < MB5370(desktop). Then in rstudio import the dataset. 
+Shark Control Program- Number of animals caught by length category within the shark control areas.
+
+```{r}
+QFISH_Sheet1
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+ggplot(data = QFISH_Sheet1) + 
+  geom_point(mapping = aes(x = Area, y = SharksCounted, colour = LengthCategory))
+
+```
+
+```{r}
+ggplot(data = QFISH_Sheet1) + 
+  geom_bar(mapping = aes(x = LengthCategory, y = SharksCounted, fill = LengthCategory), stat = 'identity', show.legend = FALSE) + 
+  facet_wrap(~ Area, nrow = 3) +
+  labs(title = "Total number caught by area and length category",
+       x = "Size Category",
+       y = "Sharks Counted") +
+  theme(legend.position = "bottom") +
+  theme_linedraw()
+
+
+```
 
 # Workshop 4 - Data wrangling in R
 5.1	Workshop schedule
